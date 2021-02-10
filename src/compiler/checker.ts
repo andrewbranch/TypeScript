@@ -7970,8 +7970,8 @@ namespace ts {
             return prop ? getTypeOfSymbol(prop) : undefined;
         }
 
-        function getTypeOfPropertyOrIndexSignature(type: Type, name: __String): Type {
-            return getTypeOfPropertyOfType(type, name) || isNumericLiteralName(name) && getIndexTypeOfType(type, IndexKind.Number) || getIndexTypeOfType(type, IndexKind.String) || unknownType;
+        function getTypeOfPropertyOrIndexSignature(type: Type, name: __String): Type | undefined {
+            return getTypeOfPropertyOfType(type, name) || isNumericLiteralName(name) && getIndexTypeOfType(type, IndexKind.Number) || getIndexTypeOfType(type, IndexKind.String);
         }
 
         function isTypeAny(type: Type | undefined) {
@@ -22629,76 +22629,15 @@ namespace ts {
                     return false;
                 }
 
-                const reachableFinalType = (propertyTypeArray.filter(t => t.finalType !== undefined).map(t => t.finalType) as Type[]);
-                const rootNullable: Type[] = (computedType.flags & TypeFlags.Union) ? (<UnionType>computedType).types.filter(t => t.id === undefinedType.id || t.id === nullType.id) : [];
+                const reachableFinalType = mapDefined(propertyTypeArray, t => t.finalType);
+                const rootNullable = (computedType.flags & TypeFlags.Union) ? (<UnionType>computedType).types.filter(t => t === undefinedType || t === nullType) : emptyArray;
 
-                if (propertyTypeArray.some(t =>
-                    t.reason === DeepPropertyUnreachableReason.OnlyNeverOnPath || t.reason === DeepPropertyUnreachableReason.OnlyNullableOnPath
-                    && rootNullable.every(n => n.id !== t.tyepeId)
-                )) {
+                if (reachableFinalType.length < propertyTypeArray.length && !some(rootNullable, t => some(propertyTypeArray, info => info.typeId === t.id))) {
                     return true;
                 }
 
                 if (!(computedType.flags & TypeFlags.Union)) {
-                    // Whether we fall back to the declared type depends entirely on how
-                    // the type could be subsequently narrowed.
-                    /**
-                     * Condition 1: computed type is not union any more.
-                     *  // omit the defination, which is easy to be infered through code and intention
-                     *  function foo(x: A | B): any {
-                     *       x;  // A | B
-                     *       if ( 'A' === x.type ) { // first trigger
-                     *           return x;  // A
-                     *       }
-                     *       x;  // B
-                     *       if ('B' === x.type) {  // second trigger
-                     *           return x;  // B
-                     *       }
-                     *       x;  // In the second time narrowing, the computed type would only have one(not Union), but should still be triggered to narrow type to never.
-                     *   }
-                     */
-                    // use declaredType is a quick way to resolve issue above -- when computed type is not union, the declared type is not chagned.
-                    // But it also bring some other issue, like #39114 and #39110. As long as the declared type is not proper, issues come.
-
-                    // and only declared union is too loose to judge it could be narrowed.
-                    /**
-                     * Condition 2: Index type with undefined/null
-                     *   function ffff1() {
-                     *       let a: Array<number>|undefined;
-                     *       a = [1];
-                     *       if(a){
-                     *           if (a[2] !== undefined) {
-                     *               a[1];
-                     *           } else {
-                     *               a[2];  // declared type is union, but here should not be narrowed to never.
-                     *           }
-                     *       }
-                     *   }
-                     */
-                    if (!(declaredType.flags & TypeFlags.Union)) {
-                        return false;
-                    }
-                    if ((<UnionType>declaredType).types.filter(t => !(t.flags & TypeFlags.Primitive)).length < 2) {
-                        return false;
-                    }
-                    // However, I still use declared type, and put it here. The main aim is for future improving.
-                    // We could deal with 'this' type and use ugly code to deal with Condition 2, then we could avoid use declared type at least for now
-                    // passing all tests and issue #39110/#39114, but does it deserve? Is the code clear enough?
-
-                    // if(isThisTypeParameter(computedType)){
-                    //     return false;
-                    // }
-                    // if(isElementAccessExpression(expr)){
-                    //     // the only purpose of these code is to omit above condition 2.
-                    //     const type = getReducedApparentType(computedType);
-                    //     if (type.flags & TypeFlags.Object) {
-                    //         const resolved = resolveStructuredTypeMembers(<ObjectType>type);
-                    //         if(resolved.stringIndexInfo || resolved.numberIndexInfo){
-                    //             return false;
-                    //         }
-                    //     }
-                    // }
-                    return true;
+                    return !!(declaredType.flags & TypeFlags.Union);
                 }
 
                 return isTypeArrayDiscriminant(reachableFinalType);
@@ -22714,6 +22653,7 @@ namespace ts {
                         else if (type !== firstType) {
                             checkFlags |= CheckFlags.HasNonUniformType;
                         }
+
                         if (isLiteralType(type)) {
                             checkFlags |= CheckFlags.HasLiteralType;
                         }
@@ -22752,7 +22692,7 @@ namespace ts {
                 const markSet = new Set<TypeId>();
                 propertyTypeArray.forEach(propertyType => {
                     if (propertyType.finalType && !(propertyType.finalType.flags & TypeFlags.Never) && isTypeComparableTo(propertyType.finalType, narrowedPropType)) {
-                        markSet.add(propertyType.tyepeId);
+                        markSet.add(propertyType.typeId);
                     }
                 });
                 rootNullable.forEach(t => {
@@ -22930,20 +22870,11 @@ namespace ts {
                 return false;
             }
 
-            const enum DeepPropertyUnreachableReason {
-                Error2339,
-                OnlyNeverOnPath,
-                OnlyNullableOnPath
-            }
-
             interface NarrowDeepPropertyInfo {
                 // Direct constituent of one union type.
-                tyepeId: TypeId;
+                typeId: TypeId;
                 // Get the type according to path from direct constituent. `undefined` means impossiable to reach type according to path.
                 finalType: Type | undefined;
-                // the reason why `finalType` is not reachable.
-                // `undefiend` only when finalType is not `undefined`
-                reason?: DeepPropertyUnreachableReason;
             }
 
             /**
@@ -22951,126 +22882,6 @@ namespace ts {
              * @param expressionWithOutKeyword an expression without any keyword. "typeof root.a" is not acceptable.
              */
             function getPropertyTypesFromTypeAccordingToExpression(type: Type, expressionWithOutKeyword: Expression): NarrowDeepPropertyInfo[] | undefined {
-
-                // If expression is a, return []
-                // If expression is a.b["c"].d(), return ["b","c","d"]
-                // NOTE: If element expression is not known in compile progress like a.b[f()].d, the result would be undefined
-                // //NOTE: this function need improvement, ElementAccessExpression argument might could be known in compile time, like "1"+"2", we should check "12" in the path, but how to get the value?
-                function tryGetPropertyPathsOfReferenceFromExpression(expressionOri: Expression, ref?: Node) {
-                    const depth = getTypeDepthIfMatch(expressionOri, ref);
-                    if (depth && depth < 0) {
-                        return undefined;
-                    }
-                    const propertyPaths = getPropertyPathsOfAccessExpressionWithDepthLimit(expressionOri, depth);
-                    return propertyPaths;
-
-                    /**
-                     * @returns return undefined means ref is not provided, return -1 means not matched
-                     */
-                    function getTypeDepthIfMatch(expression: Expression, ref?: Node): number | undefined {
-                        if (!ref) {
-                            return undefined;
-                        }
-                        let result = 0;
-                        let expr = expression;
-                        if (isMatchingReference(ref, expr)) {
-                            return result;
-                        }
-                        while (isAccessExpression(expr)) {
-                            result = result + 1;
-                            expr = expr.expression;
-                            if (isMatchingReference(ref, expr)) {
-                                return result;
-                            }
-                        }
-                        return -1;
-                    }
-
-                    function getPropertyPathsOfAccessExpressionWithDepthLimit(expressionOri: Expression, depth?: number): __String[] | undefined {
-                        const properties = [];
-                        let expr: Expression = expressionOri;
-                        while (isAccessExpression(expr) && (!depth || properties.length !== depth)) {
-                            const propName = getAccessedPropertyName(expr);
-                            if (!propName) {
-                                return undefined;
-                            }
-                            properties.unshift(propName);
-                            expr = expr.expression;
-                        }
-                        return properties;
-                    }
-                }
-
-                function getPropertyTypeFromTypeAccordingToPath(nonUntionType: Type, paths: __String[], isCallExpression: boolean): NarrowDeepPropertyInfo {
-                    const result: NarrowDeepPropertyInfo = {
-                        tyepeId: nonUntionType.id,
-                        finalType: undefined
-                    };
-
-                    const pathsLength = paths.length;
-
-                    if (paths.length === 0) {
-                        result.finalType = nonUntionType;
-                        return result;
-                    }
-
-                    if (nonUntionType.flags & TypeFlags.Primitive) {
-                        result.reason = getReasonOfUnreachableType(nonUntionType);
-                        return result;
-                    }
-
-                    let curType = nonUntionType;
-                    for (let i = 0; i < pathsLength; i++) {
-                        const path = paths[i];
-                        const nonNullableTypeIfStrict = getNonNullableTypeIfNeeded(curType);
-                        let type: Type;
-                        if (nonNullableTypeIfStrict.flags & TypeFlags.UnionOrIntersection) {
-                            // although getTypeOfPropertyOfType use getPropertyOfUnionOrIntersectionType, but in getReducedApparentType
-                            // intersection type that contains mutually exclusive discriminant properties returns never.
-                            const prop = getPropertyOfUnionOrIntersectionType(<UnionOrIntersectionType>nonNullableTypeIfStrict, path);
-                            type = prop ? getTypeOfSymbol(prop) : unknownType; // unknownType is to keep coninstance with the return value of getTypeOfPropertyOrIndexSignature
-                        }
-                        else {
-                            type = getTypeOfPropertyOrIndexSignature(nonNullableTypeIfStrict, path);
-                        }
-
-                        if (type === unknownType) {
-                            result.reason = getReasonOfUnreachableType(curType);
-                            break;
-                        }
-
-                        if (i === pathsLength - 1) {
-                            result.finalType = type;
-                            break;
-                        }
-                        curType = type;
-                    }
-
-                    // here could be improved, now, we access all return type for the signature, but it could use parameter to get reduced return types.
-                    if (isCallExpression) {
-                        if (!result) {
-                            return result;
-                        }
-                        if (result.finalType && result.finalType.flags & TypeFlags.Object) {
-                            const returnTypes = (<ObjectType>result.finalType).callSignatures?.map(getReturnTypeOfSignature);
-                            // In which condition could returnTypes be undefined?
-                            if (returnTypes) {
-                                result.finalType = getUnionType(returnTypes);
-                            }
-                        }
-                    }
-
-                    return result;
-
-                    function getReasonOfUnreachableType(t: Type) {
-                        return isTypeOnlyNullable(t) ? DeepPropertyUnreachableReason.OnlyNullableOnPath :
-                            (t.flags & TypeFlags.Never) ? DeepPropertyUnreachableReason.OnlyNeverOnPath : DeepPropertyUnreachableReason.Error2339;
-                    }
-                    function isTypeOnlyNullable(t: Type) {
-                        return !!(t.flags & TypeFlags.Nullable) && !(t.flags & (TypeFlags.Primitive ^ TypeFlags.Nullable));
-                    }
-                }
-
                 let callExpressionFlag = false;
                 if (isCallExpression(expressionWithOutKeyword)) {
                     callExpressionFlag = true;
@@ -23097,21 +22908,78 @@ namespace ts {
                 // for case 1, create `type X = A|C`, it should be filtered through optional chain, and not cause any error although A.a does not have any inner type. Like `root.a?.innerType` is valid.
                 // for case 2, it is similar, and we do not even need optional chain. Like `root.a.innerType`
 
-                let propertyTypeArray: NarrowDeepPropertyInfo[] = [];
-                if (type.flags & TypeFlags.Union) {
-                    propertyTypeArray = (<UnionType>type).types.map(type => getPropertyTypeFromTypeAccordingToPath(type, propertyPaths, callExpressionFlag));
-                }
-                else {
-                    propertyTypeArray = [getPropertyTypeFromTypeAccordingToPath(type, propertyPaths, callExpressionFlag)];
+                let propertyTypeArray: NarrowDeepPropertyInfo[] | undefined;
+                forEachType(type, t => {
+                    const propType = getPropertyTypeFromTypeAccordingToPath(t, propertyPaths, callExpressionFlag);
+                    if (propType) {
+                        propertyTypeArray = append(propertyTypeArray, propType);
+                    }
+                    else {
+                        propertyTypeArray = undefined;
+                        return true;
+                    }
+                });
+
+                return propertyTypeArray;
+
+                // If expression is a, return []
+                // If expression is a.b["c"].d(), return ["b","c","d"]
+                // NOTE: If element expression is not known in compile progress like a.b[f()].d, the result would be undefined
+                // //NOTE: this function need improvement, ElementAccessExpression argument might could be known in compile time, like "1"+"2", we should check "12" in the path, but how to get the value?
+                function tryGetPropertyPathsOfReferenceFromExpression(expressionOri: Expression, reference: Node) {
+                    const properties = [];
+                    let expr: Expression = expressionOri;
+                    while (isAccessExpression(expr)) {
+                        if (isMatchingReference(reference, expr)) {
+                            return properties;
+                        }
+                        const propName = getAccessedPropertyName(expr);
+                        if (!propName) {
+                            return undefined;
+                        }
+                        properties.unshift(propName);
+                        expr = expr.expression;
+                    }
+                    if (isMatchingReference(reference, expr)) {
+                        return properties;
+                    }
                 }
 
-                Debug.assert(propertyTypeArray.every(i => (i.finalType !== undefined && i.reason === undefined) || (i.finalType === undefined && i.reason !== undefined))); // one and only one is `undefined`.
+                function getPropertyTypeFromTypeAccordingToPath(nonUnionType: Type, paths: __String[], isCallExpression: boolean): NarrowDeepPropertyInfo | undefined {
+                    let propType: Type | undefined = nonUnionType;
+                    for (const path of paths) {
+                        if (propType.flags & TypeFlags.Nullable) {
+                            return { typeId: nonUnionType.id, finalType: undefined };
+                        }
+                        const nonNullableTypeIfStrict = getNonNullableTypeIfNeeded(propType);
+                        if (nonNullableTypeIfStrict.flags & TypeFlags.UnionOrIntersection) {
+                            // although getTypeOfPropertyOfType use getPropertyOfUnionOrIntersectionType, but in getReducedApparentType
+                            // intersection type that contains mutually exclusive discriminant properties returns never.
+                            const prop = getPropertyOfUnionOrIntersectionType(<UnionOrIntersectionType>nonNullableTypeIfStrict, path);
+                            propType = prop && getTypeOfSymbol(prop); // unknownType is to keep coninstance with the return value of getTypeOfPropertyOrIndexSignature
+                        }
+                        else {
+                            propType = getTypeOfPropertyOrIndexSignature(nonNullableTypeIfStrict, path);
+                        }
 
-                if (some(propertyTypeArray, t => t.reason === DeepPropertyUnreachableReason.Error2339)) {
-                    return undefined;
-                }
-                else {
-                    return propertyTypeArray;
+                        if (!propType) {
+                            return undefined;
+                        }
+                    }
+
+                    // here could be improved, now, we access all return type for the signature, but it could use parameter to get reduced return types.
+                    if (isCallExpression && propType && propType.flags & TypeFlags.Object) {
+                        const returnTypes = (propType as ObjectType).callSignatures?.map(getReturnTypeOfSignature);
+                        return returnTypes && {
+                            typeId: nonUnionType.id,
+                            finalType: getUnionType(returnTypes)
+                        };
+                    }
+
+                    return {
+                        typeId: nonUnionType.id,
+                        finalType: propType
+                    };
                 }
             }
 
@@ -23148,14 +23016,14 @@ namespace ts {
                         }
                         const markSet = new Set<TypeId>();
 
-                        propertyTypeArray = propertyTypeArray.concat([{ tyepeId: undefinedType.id, finalType: undefinedType }, { tyepeId: nullType.id, finalType: nullType }]);
+                        propertyTypeArray = propertyTypeArray.concat([{ typeId: undefinedType.id, finalType: undefinedType }, { typeId: nullType.id, finalType: nullType }]);
 
                         propertyTypeArray.forEach(propertyType => {
                             if (!propertyType.finalType) { return; }
                             const reachableFinalType = propertyType.finalType;
                             const propertyTypeFacts = getTypeFacts(reachableFinalType);
                             if ((propertyTypeFacts & facts) === facts) {
-                                markSet.add(propertyType.tyepeId);
+                                markSet.add(propertyType.typeId);
                             }
                         });
                         return filterType(type, (t) => markSet.has(t.id));
@@ -23343,14 +23211,14 @@ namespace ts {
                 const secondFacts = notNullOrUndefinedFilter ? TypeFacts.NEUndefinedOrNull : TypeFacts.None;
                 const markSet = new Set<TypeId>();
 
-                propertyTypeArray = propertyTypeArray.concat([{ tyepeId: undefinedType.id, finalType: undefinedType }, { tyepeId: nullType.id, finalType: nullType }]);
+                propertyTypeArray = propertyTypeArray.concat([{ typeId: undefinedType.id, finalType: undefinedType }, { typeId: nullType.id, finalType: nullType }]);
 
                 propertyTypeArray.forEach(propertyType => {
                     if (!propertyType.finalType) { return; }
                     const reachableFinalType = propertyType.finalType;
                     const propertyTypeFacts = getTypeFacts(reachableFinalType);
                     if ((propertyTypeFacts & facts) && (propertyTypeFacts & secondFacts) === secondFacts) {
-                        markSet.add(propertyType.tyepeId);
+                        markSet.add(propertyType.typeId);
                     }
                 });
                 return filterType(type, (t) => markSet.has(t.id));
