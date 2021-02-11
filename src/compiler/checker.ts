@@ -22624,15 +22624,15 @@ namespace ts {
                 if (!isAccessExpression(expr)) {
                     return false;
                 }
-                const propertyTypeArray = getPropertyTypesFromTypeAccordingToExpression(computedType, expr);
-                if (!propertyTypeArray) {
+                const propertyTypeInfo = getPropertyTypesFromTypeAccordingToExpression(computedType, expr);
+                if (!propertyTypeInfo) {
                     return false;
                 }
 
-                const reachableFinalType = mapDefined(propertyTypeArray, t => t.finalType);
+                const reachableFinalType = mapDefinedEntries(propertyTypeInfo, (typeId, type) => type && [typeId, type]);
                 const rootNullable = (computedType.flags & TypeFlags.Union) ? (<UnionType>computedType).types.filter(t => t === undefinedType || t === nullType) : emptyArray;
 
-                if (reachableFinalType.length < propertyTypeArray.length && !some(rootNullable, t => some(propertyTypeArray, info => info.typeId === t.id))) {
+                if (reachableFinalType.size < propertyTypeInfo.size && !some(rootNullable, t => propertyTypeInfo.has(t.id))) {
                     return true;
                 }
 
@@ -22640,10 +22640,10 @@ namespace ts {
                     return !!(declaredType.flags & TypeFlags.Union);
                 }
 
-                return isTypeArrayDiscriminant(reachableFinalType);
+                return areTypesDiscriminable(arrayFrom(reachableFinalType.values()));
 
                 // main part is copied from function createUnionOrIntersectionProperty
-                function isTypeArrayDiscriminant(types: Type[]) {
+                function areTypesDiscriminable(types: Type[]) {
                     let checkFlags = 0;
                     let firstType: Type | undefined;
                     for (const type of types) {
@@ -22667,14 +22667,14 @@ namespace ts {
             }
 
             function narrowTypeByDiscriminant(type: Type, access: AccessExpression, narrowTypeCb: (t: Type) => Type): Type {
-                const propertyTypeArray = getPropertyTypesFromTypeAccordingToExpression(type, access);
-                if (!propertyTypeArray) {
+                const propertyTypeInfo = getPropertyTypesFromTypeAccordingToExpression(type, access);
+                if (!propertyTypeInfo) {
                     return type;
                 }
-                const reachableFinalType = (propertyTypeArray.filter(t => t.finalType !== undefined).map(t => t.finalType) as Type[]);
-                const rootNullable: Type[] = (type.flags & TypeFlags.Union) ? (<UnionType>type).types.filter(t => t.id === undefinedType.id || t.id === nullType.id) : [];
+                const reachableFinalType = mapDefinedEntries(propertyTypeInfo, (typeId, type) => type && [typeId, type]);
+                const rootNullable: Type[] = (type.flags & TypeFlags.Union) ? (<UnionType>type).types.filter(t => t === undefinedType || t === nullType) : emptyArray;
                 const subtypes: Type[] = [];
-                forEach(reachableFinalType, propType => {
+                reachableFinalType.forEach(propType => {
                     forEachType(propType, t => { subtypes.push(t); });
                 });
                 const includesNullable = strictNullChecks && rootNullable.length > 0;
@@ -22690,9 +22690,9 @@ namespace ts {
                 const bigUnion = getUnionType(subtypes);
                 const narrowedPropType = narrowTypeCb(bigUnion);
                 const markSet = new Set<TypeId>();
-                propertyTypeArray.forEach(propertyType => {
-                    if (propertyType.finalType && !(propertyType.finalType.flags & TypeFlags.Never) && isTypeComparableTo(propertyType.finalType, narrowedPropType)) {
-                        markSet.add(propertyType.typeId);
+                propertyTypeInfo.forEach((propertyType, typeId) => {
+                    if (propertyType && !(propertyType.flags & TypeFlags.Never) && isTypeComparableTo(propertyType, narrowedPropType)) {
+                        markSet.add(typeId);
                     }
                 });
                 rootNullable.forEach(t => {
@@ -22870,18 +22870,25 @@ namespace ts {
                 return false;
             }
 
-            interface NarrowDeepPropertyInfo {
-                // Direct constituent of one union type.
-                typeId: TypeId;
-                // Get the type according to path from direct constituent. `undefined` means impossiable to reach type according to path.
-                finalType: Type | undefined;
-            }
+            /**
+             * Key is the type id of a discriminated union constituent. Value is the type of the discriminant
+             * property being tested from that constituent. Example:
+             *
+             * ```
+             * type A = { root: { kind: "a" } };
+             * type B = { root: { kind: "b" } };
+             * ```
+             *
+             * typeId(A) -> Type "a",
+             * typeId(B) -> Type "b"
+             */
+            type NarrowDeepPropertyInfo = ESMap<TypeId, Type | undefined>;
 
             /**
              * @param type Assume this should be just the type of 'reference'
              * @param expressionWithOutKeyword an expression without any keyword. "typeof root.a" is not acceptable.
              */
-            function getPropertyTypesFromTypeAccordingToExpression(type: Type, expressionWithOutKeyword: Expression): NarrowDeepPropertyInfo[] | undefined {
+            function getPropertyTypesFromTypeAccordingToExpression(type: Type, expressionWithOutKeyword: Expression): NarrowDeepPropertyInfo | undefined {
                 let callExpressionFlag = false;
                 if (isCallExpression(expressionWithOutKeyword)) {
                     callExpressionFlag = true;
@@ -22908,19 +22915,19 @@ namespace ts {
                 // for case 1, create `type X = A|C`, it should be filtered through optional chain, and not cause any error although A.a does not have any inner type. Like `root.a?.innerType` is valid.
                 // for case 2, it is similar, and we do not even need optional chain. Like `root.a.innerType`
 
-                let propertyTypeArray: NarrowDeepPropertyInfo[] | undefined;
+                let propertyTypeInfo: NarrowDeepPropertyInfo | undefined;
                 forEachType(type, t => {
                     const propType = getPropertyTypeFromTypeAccordingToPath(t, propertyPaths, callExpressionFlag);
                     if (propType) {
-                        propertyTypeArray = append(propertyTypeArray, propType);
+                        (propertyTypeInfo ||= new Map()).set(propType[0], propType[1]);
                     }
                     else {
-                        propertyTypeArray = undefined;
+                        propertyTypeInfo = undefined;
                         return true;
                     }
                 });
 
-                return propertyTypeArray;
+                return propertyTypeInfo;
 
                 // If expression is a, return []
                 // If expression is a.b["c"].d(), return ["b","c","d"]
@@ -22945,11 +22952,11 @@ namespace ts {
                     }
                 }
 
-                function getPropertyTypeFromTypeAccordingToPath(nonUnionType: Type, paths: __String[], isCallExpression: boolean): NarrowDeepPropertyInfo | undefined {
+                function getPropertyTypeFromTypeAccordingToPath(nonUnionType: Type, paths: __String[], isCallExpression: boolean): [TypeId, Type | undefined] | undefined {
                     let propType: Type | undefined = nonUnionType;
                     for (const path of paths) {
                         if (propType.flags & TypeFlags.Nullable) {
-                            return { typeId: nonUnionType.id, finalType: undefined };
+                            return [nonUnionType.id, undefined];
                         }
                         const nonNullableTypeIfStrict = getNonNullableTypeIfNeeded(propType);
                         if (nonNullableTypeIfStrict.flags & TypeFlags.UnionOrIntersection) {
@@ -22970,16 +22977,10 @@ namespace ts {
                     // here could be improved, now, we access all return type for the signature, but it could use parameter to get reduced return types.
                     if (isCallExpression && propType && propType.flags & TypeFlags.Object) {
                         const returnTypes = (propType as ObjectType).callSignatures?.map(getReturnTypeOfSignature);
-                        return returnTypes && {
-                            typeId: nonUnionType.id,
-                            finalType: getUnionType(returnTypes)
-                        };
+                        return returnTypes && [nonUnionType.id, getUnionType(returnTypes)];
                     }
 
-                    return {
-                        typeId: nonUnionType.id,
-                        finalType: propType
-                    };
+                    return [nonUnionType.id, propType];
                 }
             }
 
@@ -22988,50 +22989,37 @@ namespace ts {
                 if (operator === SyntaxKind.ExclamationEqualsToken || operator === SyntaxKind.ExclamationEqualsEqualsToken) {
                     assumeTrue = !assumeTrue;
                 }
-                let facts = assumeTrue ?
+                // What we know about the type of the property tested in the 'typeof' expression
+                let propertyTypeFacts = assumeTrue ?
                     typeofEQFacts.get(literal.text) || TypeFacts.TypeofEQHostObject :
                     typeofNEFacts.get(literal.text) || TypeFacts.TypeofNEHostObject;
+
                 const target = getReferenceCandidate(typeOfExpr.expression);
                 if (!isMatchingReference(reference, target)) {
                     if (type.flags & TypeFlags.Union) {
-                        let propertyTypeArray: NarrowDeepPropertyInfo[] | undefined;
-                        let notNullOrUndefinedFilter = false;
-                        // ~undefined means other values except undefiend. boolean, bigint....
-                        if ((assumeTrue && literal.text !== "undefined") || (!assumeTrue && literal.text === "undefined")) {
-                            // !== undefined, === ~undefined
-                            // always use full expression to narrow
-                            propertyTypeArray = getPropertyTypesFromTypeAccordingToExpression(<UnionType>type, typeOfExpr.expression);
-                            notNullOrUndefinedFilter = true;
-                        }
-                        else {
-                            // !== ~undefined, === undefined
-                            // use non-OptionalChain part to narrow
-                            propertyTypeArray = isAccessExpressionContainOptionalChain(typeOfExpr.expression) ? undefined : getPropertyTypesFromTypeAccordingToExpression(<UnionType>type, typeOfExpr.expression);
-                        }
+                        const definitelyNotUndefined = (assumeTrue && literal.text !== "undefined") || (!assumeTrue && literal.text === "undefined");
+                        const definitelyUndefined = assumeTrue && literal.text === "undefined";
+                        const propertyTypeArray = getPropertyTypesFromTypeAccordingToExpression(<UnionType>type, typeOfExpr.expression);
                         if (!propertyTypeArray) {
                             return type;
                         }
-                        if (notNullOrUndefinedFilter) {
-                            facts |= TypeFacts.NEUndefinedOrNull;
+                        if (definitelyNotUndefined) {
+                            propertyTypeFacts |= TypeFacts.NEUndefined;
                         }
-                        const markSet = new Set<TypeId>();
+                        else if (definitelyUndefined) {
+                            propertyTypeFacts |= TypeFacts.EQUndefined;
+                        }
 
-                        propertyTypeArray = propertyTypeArray.concat([{ typeId: undefinedType.id, finalType: undefinedType }, { typeId: nullType.id, finalType: nullType }]);
-
-                        propertyTypeArray.forEach(propertyType => {
-                            if (!propertyType.finalType) { return; }
-                            const reachableFinalType = propertyType.finalType;
-                            const propertyTypeFacts = getTypeFacts(reachableFinalType);
-                            if ((propertyTypeFacts & facts) === facts) {
-                                markSet.add(propertyType.typeId);
-                            }
+                        propertyTypeArray.set(undefinedType.id, undefinedType);
+                        propertyTypeArray.set(nullType.id, nullType);
+                        return filterType(type, t => {
+                            const discriminantType = propertyTypeArray.get(t.id);
+                            return !!discriminantType && (getTypeFacts(discriminantType) & propertyTypeFacts) === propertyTypeFacts;
                         });
-                        return filterType(type, (t) => markSet.has(t.id));
                     }
                     return type;
                 }
 
-                // following code is all for typeof expression.
                 if (type.flags & TypeFlags.Any && literal.text === "function") {
                     return type;
                 }
@@ -23047,7 +23035,7 @@ namespace ts {
                     return getUnionType([nonPrimitiveType, nullType]);
                 }
                 const impliedType = getImpliedTypeFromTypeofGuard(type, literal.text);
-                return getTypeWithFacts(assumeTrue && impliedType ? mapType(type, narrowUnionMemberByTypeof(impliedType)) : type, facts);
+                return getTypeWithFacts(assumeTrue && impliedType ? mapType(type, narrowUnionMemberByTypeof(impliedType)) : type, propertyTypeFacts);
             }
 
             function narrowTypeBySwitchOptionalChainContainment(type: Type, switchStatement: SwitchStatement, clauseStart: number, clauseEnd: number, clauseCheck: (type: Type) => boolean) {
@@ -23190,7 +23178,7 @@ namespace ts {
                     }
                     return getTypeWithFacts(mapType(type, narrowUnionMemberByTypeof(impliedType)), switchFacts);
                 }
-                let propertyTypeArray: NarrowDeepPropertyInfo[] | undefined;
+                let propertyTypeArray: NarrowDeepPropertyInfo | undefined;
                 let notNullOrUndefinedFilter = false;
                 const isExpressionContainOptionalChain = isAccessExpressionContainOptionalChain(expr);
                 const facts = switchFacts;
@@ -23211,14 +23199,14 @@ namespace ts {
                 const secondFacts = notNullOrUndefinedFilter ? TypeFacts.NEUndefinedOrNull : TypeFacts.None;
                 const markSet = new Set<TypeId>();
 
-                propertyTypeArray = propertyTypeArray.concat([{ typeId: undefinedType.id, finalType: undefinedType }, { typeId: nullType.id, finalType: nullType }]);
+                propertyTypeArray.set(undefinedType.id, undefinedType);
+                propertyTypeArray.set(nullType.id, nullType);
 
-                propertyTypeArray.forEach(propertyType => {
-                    if (!propertyType.finalType) { return; }
-                    const reachableFinalType = propertyType.finalType;
-                    const propertyTypeFacts = getTypeFacts(reachableFinalType);
+                propertyTypeArray.forEach((propertyType, typeId) => {
+                    if (!propertyType) { return; }
+                    const propertyTypeFacts = getTypeFacts(propertyType);
                     if ((propertyTypeFacts & facts) && (propertyTypeFacts & secondFacts) === secondFacts) {
-                        markSet.add(propertyType.typeId);
+                        markSet.add(typeId);
                     }
                 });
                 return filterType(type, (t) => markSet.has(t.id));
