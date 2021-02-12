@@ -22952,11 +22952,11 @@ namespace ts {
                     }
                 }
 
-                function getPropertyTypeFromTypeAccordingToPath(nonUnionType: Type, paths: __String[], isCallExpression: boolean): [TypeId, Type | undefined] | undefined {
-                    let propType: Type | undefined = nonUnionType;
+                function getPropertyTypeFromTypeAccordingToPath(constituentType: Type, paths: __String[], isCallExpression: boolean): [TypeId, Type | undefined] | undefined {
+                    let propType: Type | undefined = constituentType;
                     for (const path of paths) {
                         if (propType.flags & TypeFlags.Nullable) {
-                            return [nonUnionType.id, undefined];
+                            return [constituentType.id, undefined];
                         }
                         const nonNullableTypeIfStrict = getNonNullableTypeIfNeeded(propType);
                         if (nonNullableTypeIfStrict.flags & TypeFlags.UnionOrIntersection) {
@@ -22977,10 +22977,10 @@ namespace ts {
                     // here could be improved, now, we access all return type for the signature, but it could use parameter to get reduced return types.
                     if (isCallExpression && propType && propType.flags & TypeFlags.Object) {
                         const returnTypes = (propType as ObjectType).callSignatures?.map(getReturnTypeOfSignature);
-                        return returnTypes && [nonUnionType.id, getUnionType(returnTypes)];
+                        return returnTypes && [constituentType.id, getUnionType(returnTypes)];
                     }
 
-                    return [nonUnionType.id, propType];
+                    return [constituentType.id, propType];
                 }
             }
 
@@ -22999,8 +22999,8 @@ namespace ts {
                     if (type.flags & TypeFlags.Union) {
                         const definitelyNotUndefined = (assumeTrue && literal.text !== "undefined") || (!assumeTrue && literal.text === "undefined");
                         const definitelyUndefined = assumeTrue && literal.text === "undefined";
-                        const propertyTypeArray = getPropertyTypesFromTypeAccordingToExpression(<UnionType>type, typeOfExpr.expression);
-                        if (!propertyTypeArray) {
+                        const propertyTypes = getPropertyTypesFromTypeAccordingToExpression(<UnionType>type, typeOfExpr.expression);
+                        if (!propertyTypes) {
                             return type;
                         }
                         if (definitelyNotUndefined) {
@@ -23010,10 +23010,12 @@ namespace ts {
                             propertyTypeFacts |= TypeFacts.EQUndefined;
                         }
 
-                        propertyTypeArray.set(undefinedType.id, undefinedType);
-                        propertyTypeArray.set(nullType.id, nullType);
+                        // Optional chain access off null or undefined will result in a property type of 'undefined'
+                        propertyTypes.set(undefinedType.id, undefinedType);
+                        propertyTypes.set(nullType.id, undefinedType);
+
                         return filterType(type, t => {
-                            const discriminantType = propertyTypeArray.get(t.id);
+                            const discriminantType = propertyTypes.get(t.id);
                             return !!discriminantType && (getTypeFacts(discriminantType) & propertyTypeFacts) === propertyTypeFacts;
                         });
                     }

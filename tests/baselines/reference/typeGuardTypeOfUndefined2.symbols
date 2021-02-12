@@ -1,0 +1,123 @@
+=== tests/cases/conformance/expressions/typeGuards/typeGuardTypeOfUndefined2.ts ===
+function test1(a: { b: number } | { b: null }) {
+>test1 : Symbol(test1, Decl(typeGuardTypeOfUndefined2.ts, 0, 0))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 0, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 0, 19))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 0, 35))
+
+  if (typeof a.b === "undefined") {
+>a.b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 0, 19), Decl(typeGuardTypeOfUndefined2.ts, 0, 35))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 0, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 0, 19), Decl(typeGuardTypeOfUndefined2.ts, 0, 35))
+
+      a; // never
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 0, 15))
+  }
+  else {
+      a; // { b: number } | { b: null }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 0, 15))
+  }
+}
+
+function test2(a: { b: number } | { b: null }) {
+>test2 : Symbol(test2, Decl(typeGuardTypeOfUndefined2.ts, 7, 1))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 9, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 9, 19))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 9, 35))
+
+  if (typeof a.b !== "undefined") {
+>a.b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 9, 19), Decl(typeGuardTypeOfUndefined2.ts, 9, 35))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 9, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 9, 19), Decl(typeGuardTypeOfUndefined2.ts, 9, 35))
+
+      a; // { b: number } | { b: null }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 9, 15))
+  }
+  else {
+      a; // never
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 9, 15))
+  }
+}
+
+function test3(a: { b: number } | { b: undefined }) {
+>test3 : Symbol(test3, Decl(typeGuardTypeOfUndefined2.ts, 16, 1))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 18, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 18, 19))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 18, 35))
+
+  if (typeof a?.b === "undefined") {
+>a?.b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 18, 19), Decl(typeGuardTypeOfUndefined2.ts, 18, 35))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 18, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 18, 19), Decl(typeGuardTypeOfUndefined2.ts, 18, 35))
+
+    a; // { b: undefined }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 18, 15))
+  }
+  else {
+    a; // { b: number }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 18, 15))
+  }
+}
+
+function test4(a?: { b: number } | { b: undefined }) {
+>test4 : Symbol(test4, Decl(typeGuardTypeOfUndefined2.ts, 25, 1))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 27, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 27, 20))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 27, 36))
+
+  if (typeof a?.b === "undefined") {
+>a?.b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 27, 20), Decl(typeGuardTypeOfUndefined2.ts, 27, 36))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 27, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 27, 20), Decl(typeGuardTypeOfUndefined2.ts, 27, 36))
+
+    a; // { b: undefined } | undefined
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 27, 15))
+  }
+  else {
+    a; // { b: number }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 27, 15))
+  }
+}
+
+function test5(a?: { b: number } | { b: undefined } | { b: null } | null) {
+>test5 : Symbol(test5, Decl(typeGuardTypeOfUndefined2.ts, 34, 1))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 36, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 36, 20))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 36, 36))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 36, 55))
+
+  if (typeof a?.b === "undefined") {
+>a?.b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 36, 20), Decl(typeGuardTypeOfUndefined2.ts, 36, 36), Decl(typeGuardTypeOfUndefined2.ts, 36, 55))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 36, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 36, 20), Decl(typeGuardTypeOfUndefined2.ts, 36, 36), Decl(typeGuardTypeOfUndefined2.ts, 36, 55))
+
+    a; // { b: undefined } | null | undefined
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 36, 15))
+  }
+  else {
+    a; // { b: number } | { b: null }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 36, 15))
+  }
+}
+
+function test6(a?: { b: number } | { b: undefined } | { b: null } | null) {
+>test6 : Symbol(test6, Decl(typeGuardTypeOfUndefined2.ts, 43, 1))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 45, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 45, 20))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 45, 36))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 45, 55))
+
+  if (typeof a?.b !== "undefined") {
+>a?.b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 45, 20), Decl(typeGuardTypeOfUndefined2.ts, 45, 36), Decl(typeGuardTypeOfUndefined2.ts, 45, 55))
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 45, 15))
+>b : Symbol(b, Decl(typeGuardTypeOfUndefined2.ts, 45, 20), Decl(typeGuardTypeOfUndefined2.ts, 45, 36), Decl(typeGuardTypeOfUndefined2.ts, 45, 55))
+
+    a; // { b: number } | { b: null }
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 45, 15))
+  }
+  else {
+    a; // { b: undefined } | null | undefined
+>a : Symbol(a, Decl(typeGuardTypeOfUndefined2.ts, 45, 15))
+  }
+}
+
