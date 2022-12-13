@@ -318,6 +318,7 @@ import {
     getResolutionModeOverrideForClause,
     getResolvedExternalModuleName,
     getResolvedModule,
+    getResolveJsonModule,
     getRestParameterElementType,
     getRootDeclaration,
     getScriptTargetFeatures,
@@ -347,8 +348,8 @@ import {
     hasAccessorModifier,
     hasAmbientModifier,
     hasContextSensitiveParameters,
-    HasDecorators,
     hasDecorators,
+    HasDecorators,
     hasDynamicName,
     hasEffectiveModifier,
     hasEffectiveModifiers,
@@ -357,8 +358,8 @@ import {
     hasExtension,
     HasIllegalDecorators,
     HasIllegalModifiers,
-    HasInitializer,
     hasInitializer,
+    HasInitializer,
     hasJSDocNodes,
     hasJSDocParameterTags,
     hasJsonModuleEmitEnabled,
@@ -4546,6 +4547,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             if (
                 namespace.valueDeclaration &&
                 isInJSFile(namespace.valueDeclaration) &&
+                getEmitModuleResolutionKind(compilerOptions) !== ModuleResolutionKind.Bundler &&
                 isVariableDeclaration(namespace.valueDeclaration) &&
                 namespace.valueDeclaration.initializer &&
                 isCommonJsRequire(namespace.valueDeclaration.initializer)
@@ -4875,7 +4877,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (tsExtension) {
                     errorOnTSExtensionImport(tsExtension);
                 }
-                else if (!compilerOptions.resolveJsonModule &&
+                else if (!getResolveJsonModule(compilerOptions) &&
                     fileExtensionIs(moduleReference, Extension.Json) &&
                     moduleResolutionKind !== ModuleResolutionKind.Classic &&
                     hasJsonModuleEmitEnabled(compilerOptions)) {
@@ -33324,7 +33326,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
 
         // In JavaScript files, calls to any identifier 'require' are treated as external module imports
-        if (isInJSFile(node) && isCommonJsRequire(node)) {
+        if (isInJSFile(node) && getEmitModuleResolutionKind(compilerOptions) !== ModuleResolutionKind.Bundler && isCommonJsRequire(node)) {
             return resolveExternalModuleTypeByLiteral(node.arguments![0] as StringLiteral);
         }
 
@@ -42726,6 +42728,9 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     // Import equals declaration is deprecated in es6 or above
                     grammarErrorOnNode(node, Diagnostics.Import_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_import_Asterisk_as_ns_from_mod_import_a_from_mod_import_d_from_mod_or_another_module_format_instead);
                 }
+                else if (getEmitModuleResolutionKind(compilerOptions) === ModuleResolutionKind.Bundler) {
+                    grammarErrorOnNode(node, Diagnostics.Import_assignment_is_not_allowed_when_moduleResolution_is_set_to_bundler_Consider_using_import_Asterisk_as_ns_from_mod_import_a_from_mod_import_d_from_mod_or_another_module_format_instead);
+                }
             }
         }
     }
@@ -42947,6 +42952,9 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             else if (moduleKind === ModuleKind.System) {
                 // system modules does not support export assignment
                 grammarErrorOnNode(node, Diagnostics.Export_assignment_is_not_supported_when_module_flag_is_system);
+            }
+            else if (getEmitModuleResolutionKind(compilerOptions) === ModuleResolutionKind.Bundler) {
+                grammarErrorOnNode(node, Diagnostics.Export_assignment_cannot_be_used_when_moduleResolution_is_set_to_bundler_Consider_using_export_default_or_another_module_format_instead);
             }
         }
     }
@@ -44042,7 +44050,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 // 4). type A = import("./f/*gotToDefinitionHere*/oo")
                 if ((isExternalModuleImportEqualsDeclaration(node.parent.parent) && getExternalModuleImportEqualsDeclarationExpression(node.parent.parent) === node) ||
                     ((node.parent.kind === SyntaxKind.ImportDeclaration || node.parent.kind === SyntaxKind.ExportDeclaration) && (node.parent as ImportDeclaration).moduleSpecifier === node) ||
-                    ((isInJSFile(node) && isRequireCall(node.parent, /*checkArgumentIsStringLiteralLike*/ false)) || isImportCall(node.parent)) ||
+                    ((isInJSFile(node) && getEmitModuleResolutionKind(compilerOptions) !== ModuleResolutionKind.Bundler && isRequireCall(node.parent, /*checkArgumentIsStringLiteralLike*/ false)) || isImportCall(node.parent)) ||
                     (isLiteralTypeNode(node.parent) && isLiteralImportTypeNode(node.parent.parent) && node.parent.parent.argument === node.parent)
                 ) {
                     return resolveExternalModuleName(node, node as LiteralExpression, ignoreErrors);

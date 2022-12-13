@@ -2410,11 +2410,6 @@ export function getModuleSpecifierResolverHost(program: Program, host: LanguageS
 }
 
 /** @internal */
-export function moduleResolutionRespectsExports(moduleResolution: ModuleResolutionKind): boolean {
-    return moduleResolution >= ModuleResolutionKind.Node16 && moduleResolution <= ModuleResolutionKind.NodeNext;
-}
-
-/** @internal */
 export function moduleResolutionUsesNodeModules(moduleResolution: ModuleResolutionKind): boolean {
     return moduleResolution === ModuleResolutionKind.NodeJs || moduleResolution >= ModuleResolutionKind.Node16 && moduleResolution <= ModuleResolutionKind.NodeNext;
 }

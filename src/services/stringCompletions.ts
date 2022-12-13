@@ -54,6 +54,7 @@ import {
     getPackageJsonTypesVersionsPaths,
     getPathComponents,
     getReplacementSpanForContextToken,
+    getResolvePackageJsonExports,
     getSupportedExtensions,
     getSupportedExtensionsWithJsonIfResolveJsonModule,
     getTokenAtPosition,
@@ -90,7 +91,6 @@ import {
     mapDefined,
     MapLike,
     ModuleKind,
-    moduleResolutionRespectsExports,
     moduleResolutionUsesNodeModules,
     ModuleSpecifierEnding,
     moduleSpecifiers,
@@ -545,7 +545,7 @@ interface ExtensionOptions {
 }
 
 function getExtensionOptions(compilerOptions: CompilerOptions, referenceKind: ReferenceKind, importingSourceFile: SourceFile, preferences?: UserPreferences, resolutionMode?: ResolutionMode): ExtensionOptions {
-return {
+    return {
         extensionsToSearch: flatten(getSupportedExtensionsForModuleResolution(compilerOptions)),
         referenceKind,
         importingSourceFile,
@@ -845,7 +845,7 @@ function getCompletionEntriesForNonRelativeModules(
                     getCompletionEntriesForDirectoryFragment(fragment, nodeModules, extensionOptions, host, /*moduleSpecifierIsRelative*/ false, /*exclude*/ undefined, result);
                 }
             };
-            if (fragmentDirectory && moduleResolutionRespectsExports(moduleResolution)) {
+            if (fragmentDirectory && getResolvePackageJsonExports(compilerOptions)) {
                 const nodeModulesDirectoryLookup = ancestorLookup;
                 ancestorLookup = ancestor => {
                     const components = getPathComponents(fragment);

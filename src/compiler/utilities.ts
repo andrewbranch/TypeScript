@@ -7775,11 +7775,62 @@ export function getESModuleInterop(compilerOptions: CompilerOptions) {
 
 /** @internal */
 export function getAllowSyntheticDefaultImports(compilerOptions: CompilerOptions) {
-    const moduleKind = getEmitModuleKind(compilerOptions);
-    return compilerOptions.allowSyntheticDefaultImports !== undefined
-        ? compilerOptions.allowSyntheticDefaultImports
-        : getESModuleInterop(compilerOptions) ||
-        moduleKind === ModuleKind.System;
+    if (compilerOptions.allowSyntheticDefaultImports !== undefined) {
+        return compilerOptions.allowSyntheticDefaultImports;
+    }
+    return getESModuleInterop(compilerOptions)
+        || getEmitModuleKind(compilerOptions) === ModuleKind.System
+        || getEmitModuleResolutionKind(compilerOptions) === ModuleResolutionKind.Bundler;
+}
+
+/** @internal */
+export function moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution: ModuleResolutionKind): boolean {
+    return moduleResolution >= ModuleResolutionKind.Node16 && moduleResolution <= ModuleResolutionKind.NodeNext
+        || moduleResolution === ModuleResolutionKind.Bundler;
+}
+
+/** @internal */
+export function getResolvePackageJsonExports(compilerOptions: CompilerOptions) {
+    const moduleResolution = getEmitModuleResolutionKind(compilerOptions);
+    if (!moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution)) {
+        return false;
+    }
+    if (compilerOptions.resolvePackageJsonExports !== undefined) {
+        return compilerOptions.resolvePackageJsonExports;
+    }
+    switch (moduleResolution) {
+        case ModuleResolutionKind.Node16:
+        case ModuleResolutionKind.NodeNext:
+        case ModuleResolutionKind.Bundler:
+            return true;
+    }
+    return false;
+}
+
+/** @internal */
+export function getResolvePackageJsonImports(compilerOptions: CompilerOptions) {
+    const moduleResolution = getEmitModuleResolutionKind(compilerOptions);
+    if (!moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution)) {
+        return false;
+    }
+    if (compilerOptions.resolvePackageJsonExports !== undefined) {
+        return compilerOptions.resolvePackageJsonExports;
+    }
+    switch (moduleResolution) {
+        case ModuleResolutionKind.Node16:
+        case ModuleResolutionKind.NodeNext:
+        case ModuleResolutionKind.Bundler:
+            return true;
+    }
+    return false;
+}
+
+/** @internal */
+export function getResolveJsonModule(compilerOptions: CompilerOptions) {
+    if (compilerOptions.resolveJsonModule !== undefined) {
+        return compilerOptions.resolveJsonModule;
+    }
+    return getEmitModuleResolutionKind(compilerOptions) === ModuleResolutionKind.Bundler;
 }
 
 /** @internal */
@@ -8417,7 +8468,7 @@ export function getSupportedExtensionsWithJsonIfResolveJsonModule(options: Compi
 export function getSupportedExtensionsWithJsonIfResolveJsonModule(options: CompilerOptions | undefined, supportedExtensions: readonly string[][]): readonly string[][];
 /** @internal */
 export function getSupportedExtensionsWithJsonIfResolveJsonModule(options: CompilerOptions | undefined, supportedExtensions: readonly string[][]): readonly string[][] {
-    if (!options || !options.resolveJsonModule) return supportedExtensions;
+    if (!options || !getResolveJsonModule(options)) return supportedExtensions;
     if (supportedExtensions === allSupportedExtensions) return allSupportedExtensionsWithJson;
     if (supportedExtensions === supportedTSExtensions) return supportedTSExtensionsWithJson;
     return [...supportedExtensions, [Extension.Json]];

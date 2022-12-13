@@ -2,6 +2,7 @@ import {
     append,
     appendIfUnique,
     arrayFrom,
+    arrayIsEqualTo,
     changeAnyExtension,
     CharacterCodes,
     combinePaths,
@@ -9,10 +10,12 @@ import {
     comparePaths,
     Comparison,
     CompilerOptions,
+    concatenate,
     contains,
     containsPath,
     createCompilerDiagnostic,
     Debug,
+    deduplicate,
     Diagnostic,
     DiagnosticMessage,
     DiagnosticReporter,
@@ -47,6 +50,7 @@ import {
     getPathsBasePath,
     getPossibleOriginalInputExtensionForExtension,
     getRelativePathFromDirectory,
+    getResolveJsonModule,
     getRootLength,
     hasJSFileExtension,
     hasProperty,
@@ -499,7 +503,7 @@ export function resolveTypeReferenceDirective(typeReferenceDirectiveName: string
 
     const failedLookupLocations: string[] = [];
     const affectingLocations: string[] = [];
-    let features = getDefaultNodeResolutionFeatures(options);
+    let features = getNodeResolutionFeatures(options);
     // Unlike `import` statements, whose mode-calculating APIs are all guaranteed to return `undefined` if we're in an un-mode-ed module resolution
     // setting, type references will return their target mode regardless of options because of how the parser works, so we guard against the mode being
     // set in a non-modal module resolution setting here. Do note that our behavior is not particularly well defined when these mode-overriding imports
@@ -510,7 +514,7 @@ export function resolveTypeReferenceDirective(typeReferenceDirectiveName: string
     if (resolutionMode === ModuleKind.ESNext && (getEmitModuleResolutionKind(options) === ModuleResolutionKind.Node16 || getEmitModuleResolutionKind(options) === ModuleResolutionKind.NodeNext)) {
         features |= NodeResolutionFeatures.EsmMode;
     }
-    const conditions = features & NodeResolutionFeatures.Exports ? features & NodeResolutionFeatures.EsmMode ? ["node", "import", "types"] : ["node", "require", "types"] : [];
+    const conditions = features & NodeResolutionFeatures.Exports ? getConditions(options, !!(features & NodeResolutionFeatures.EsmMode)) : [];
     const diagnostics: Diagnostic[] = [];
     const moduleResolutionState: ModuleResolutionState = {
         compilerOptions: options,
@@ -625,10 +629,44 @@ export function resolveTypeReferenceDirective(typeReferenceDirectiveName: string
     }
 }
 
-function getDefaultNodeResolutionFeatures(options: CompilerOptions) {
-    return getEmitModuleResolutionKind(options) === ModuleResolutionKind.Node16 ? NodeResolutionFeatures.Node16Default :
-        getEmitModuleResolutionKind(options) === ModuleResolutionKind.NodeNext ? NodeResolutionFeatures.NodeNextDefault :
-            NodeResolutionFeatures.None;
+function getNodeResolutionFeatures(options: CompilerOptions) {
+    let features = NodeResolutionFeatures.None;
+    switch (getEmitModuleResolutionKind(options)) {
+        case ModuleResolutionKind.Node16:
+            features = NodeResolutionFeatures.Node16Default;
+            break;
+        case ModuleResolutionKind.NodeNext:
+            features = NodeResolutionFeatures.NodeNextDefault;
+            break;
+        case ModuleResolutionKind.Bundler:
+            features = NodeResolutionFeatures.BundlerDefault;
+            break;
+    }
+    if (options.resolvePackageJsonExports) {
+        features |= NodeResolutionFeatures.Exports;
+    }
+    else if (options.resolvePackageJsonExports === false) {
+        features &= ~NodeResolutionFeatures.Exports;
+    }
+    if (options.resolvePackageJsonImports) {
+        features |= NodeResolutionFeatures.Imports;
+    }
+    else if (options.resolvePackageJsonImports === false) {
+        features &= ~NodeResolutionFeatures.Imports;
+    }
+    return features;
+}
+
+function getConditions(options: CompilerOptions, esmMode?: boolean) {
+    // conditions are only used by the node16/nodenext/bundler resolvers - there's no priority order in the list,
+    // it's essentially a set (priority is determined by object insertion order in the object we look at).
+    const conditions = esmMode || getEmitModuleResolutionKind(options) === ModuleResolutionKind.Bundler
+        ? ["node", "import"]
+        : ["node", "require"];
+    if (!options.noDtsResolution) {
+        conditions.push("types");
+    }
+    return concatenate(conditions, options.customConditions);
 }
 
 /**
@@ -1246,6 +1284,9 @@ export function resolveModuleName(moduleName: string, containingFile: string, co
             case ModuleResolutionKind.Classic:
                 result = classicNameResolver(moduleName, containingFile, compilerOptions, host, cache, redirectedReference);
                 break;
+            case ModuleResolutionKind.Bundler:
+                result = bundlerModuleNameResolver(moduleName, containingFile, compilerOptions, host, cache, redirectedReference);
+                break;
             default:
                 return Debug.fail(`Unexpected moduleResolution: ${moduleResolution}`);
         }
@@ -1500,6 +1541,8 @@ export enum NodeResolutionFeatures {
 
     NodeNextDefault = AllFeatures,
 
+    BundlerDefault = Imports | SelfName | Exports | ExportsPatternTrailers,
+
     EsmMode = 1 << 5,
 }
 
@@ -1539,7 +1582,7 @@ function nodeNextModuleNameResolverWorker(features: NodeResolutionFeatures, modu
     // es module file or cjs-like input file, use a variant of the legacy cjs resolver that supports the selected modern features
     const esmMode = resolutionMode === ModuleKind.ESNext ? NodeResolutionFeatures.EsmMode : 0;
     let extensions = compilerOptions.noDtsResolution ? Extensions.ImplementationFiles : Extensions.TypeScript | Extensions.JavaScript | Extensions.Declaration;
-    if (compilerOptions.resolveJsonModule) {
+    if (getResolveJsonModule(compilerOptions)) {
         extensions |= Extensions.Json;
     }
     return nodeModuleNameResolverWorker(features | esmMode, moduleName, containingDirectory, compilerOptions, host, cache, extensions, /*isConfigLookup*/ false, redirectedReference);
@@ -1558,6 +1601,15 @@ function tryResolveJSModuleWorker(moduleName: string, initialDir: string, host: 
         /*redirectedReferences*/ undefined);
 }
 
+export function bundlerModuleNameResolver(moduleName: string, containingFile: string, compilerOptions: CompilerOptions, host: ModuleResolutionHost, cache?: ModuleResolutionCache, redirectedReference?: ResolvedProjectReference): ResolvedModuleWithFailedLookupLocations {
+    const containingDirectory = getDirectoryPath(containingFile);
+    let extensions = compilerOptions.noDtsResolution ? Extensions.ImplementationFiles : Extensions.TypeScript | Extensions.JavaScript | Extensions.Declaration;
+    if (getResolveJsonModule(compilerOptions)) {
+        extensions |= Extensions.Json;
+    }
+    return nodeModuleNameResolverWorker(getNodeResolutionFeatures(compilerOptions), moduleName, containingDirectory, compilerOptions, host, cache, extensions, /*isConfigLookup*/ false, redirectedReference);
+}
+
 export function nodeModuleNameResolver(moduleName: string, containingFile: string, compilerOptions: CompilerOptions, host: ModuleResolutionHost, cache?: ModuleResolutionCache, redirectedReference?: ResolvedProjectReference): ResolvedModuleWithFailedLookupLocations;
 /** @internal */ export function nodeModuleNameResolver(moduleName: string, containingFile: string, compilerOptions: CompilerOptions, host: ModuleResolutionHost, cache?: ModuleResolutionCache, redirectedReference?: ResolvedProjectReference, lookupConfig?: boolean): ResolvedModuleWithFailedLookupLocations; // eslint-disable-line @typescript-eslint/unified-signatures
 export function nodeModuleNameResolver(moduleName: string, containingFile: string, compilerOptions: CompilerOptions, host: ModuleResolutionHost, cache?: ModuleResolutionCache, redirectedReference?: ResolvedProjectReference, isConfigLookup?: boolean): ResolvedModuleWithFailedLookupLocations {
@@ -1567,10 +1619,10 @@ export function nodeModuleNameResolver(moduleName: string, containingFile: strin
     }
     else if (compilerOptions.noDtsResolution) {
         extensions = Extensions.ImplementationFiles;
-        if (compilerOptions.resolveJsonModule) extensions |= Extensions.Json;
+        if (getResolveJsonModule(compilerOptions)) extensions |= Extensions.Json;
     }
     else {
-        extensions = compilerOptions.resolveJsonModule
+        extensions = getResolveJsonModule(compilerOptions)
             ? Extensions.TypeScript | Extensions.JavaScript | Extensions.Declaration | Extensions.Json
             : Extensions.TypeScript | Extensions.JavaScript | Extensions.Declaration;
     }
@@ -1582,12 +1634,7 @@ function nodeModuleNameResolverWorker(features: NodeResolutionFeatures, moduleNa
 
     const failedLookupLocations: string[] = [];
     const affectingLocations: string[] = [];
-    // conditions are only used by the node16/nodenext resolver - there's no priority order in the list,
-    //it's essentially a set (priority is determined by object insertion order in the object we look at).
-    const conditions = features & NodeResolutionFeatures.EsmMode ? ["node", "import", "types"] : ["node", "require", "types"];
-    if (compilerOptions.noDtsResolution) {
-        conditions.pop();
-    }
+    const conditions = getConditions(compilerOptions, !!(features & NodeResolutionFeatures.EsmMode));
 
     const diagnostics: Diagnostic[] = [];
     const state: ModuleResolutionState = {
@@ -1731,7 +1778,7 @@ function nodeLoadModuleByRelativeName(extensions: Extensions, candidate: string,
         }
     }
     // esm mode relative imports shouldn't do any directory lookups (either inside `package.json`
-    // files or implicit `index.js`es). This is a notable depature from cjs norms, where `./foo/pkg`
+    // files or implicit `index.js`es). This is a notable departure from cjs norms, where `./foo/pkg`
     // could have been redirected by `./foo/pkg/package.json` to an arbitrary location!
     if (!(state.features & NodeResolutionFeatures.EsmMode)) {
         return loadNodeModuleFromDirectory(extensions, candidate, onlyRecordFailures, state, considerPackageJson);
@@ -1808,7 +1855,9 @@ function loadModuleFromFileNoImplicitExtensions(extensions: Extensions, candidat
     // e.g. "./foo.js" can be matched by "./foo.ts" or "./foo.d.ts"
     if (hasJSFileExtension(candidate) ||
         extensions & Extensions.Json && fileExtensionIs(candidate, Extension.Json) ||
-        extensions & (Extensions.TypeScript | Extensions.Declaration) && moduleResolutionSupportsResolvingTsExtensions(state.compilerOptions) && fileExtensionIsOneOf(candidate, supportedTSExtensionsFlat)
+        extensions & (Extensions.TypeScript | Extensions.Declaration)
+            && moduleResolutionSupportsResolvingTsExtensions(state.compilerOptions)
+            && fileExtensionIsOneOf(candidate, supportedTSExtensionsFlat)
     ) {
         const extensionless = removeFileExtension(candidate);
         const extension = candidate.substring(extensionless.length);
@@ -1942,26 +1991,30 @@ export function getEntrypointsFromPackageJsonInfo(
 
     let entrypoints: string[] | undefined;
     const extensions = Extensions.TypeScript | Extensions.Declaration | (resolveJs ? Extensions.JavaScript : 0);
-    const features = getDefaultNodeResolutionFeatures(options);
-    const requireState = getTemporaryModuleResolutionState(cache?.getPackageJsonInfoCache(), host, options);
-    requireState.conditions = ["node", "require", "types"];
-    requireState.requestContainingDirectory = packageJsonInfo.packageDirectory;
-    const requireResolution = loadNodeModuleFromDirectoryWorker(
+    const features = getNodeResolutionFeatures(options);
+    const loadPackageJsonMainState = getTemporaryModuleResolutionState(cache?.getPackageJsonInfoCache(), host, options);
+    loadPackageJsonMainState.conditions = getConditions(options);
+    loadPackageJsonMainState.requestContainingDirectory = packageJsonInfo.packageDirectory;
+    const mainResolution = loadNodeModuleFromDirectoryWorker(
         extensions,
         packageJsonInfo.packageDirectory,
         /*onlyRecordFailures*/ false,
-        requireState,
+        loadPackageJsonMainState,
         packageJsonInfo.contents.packageJsonContent,
-        getVersionPathsOfPackageJsonInfo(packageJsonInfo, requireState));
-    entrypoints = append(entrypoints, requireResolution?.path);
+        getVersionPathsOfPackageJsonInfo(packageJsonInfo, loadPackageJsonMainState));
+    entrypoints = append(entrypoints, mainResolution?.path);
 
     if (features & NodeResolutionFeatures.Exports && packageJsonInfo.contents.packageJsonContent.exports) {
-        for (const conditions of [["node", "import", "types"], ["node", "require", "types"]]) {
-            const exportState = { ...requireState, failedLookupLocations: [], conditions };
+        const conditionSets = deduplicate(
+            [getConditions(options, /*esmMode*/ true), getConditions(options, /*esmMode*/ false)],
+            arrayIsEqualTo
+        );
+        for (const conditions of conditionSets) {
+            const loadPackageJsonExportsState = { ...loadPackageJsonMainState, failedLookupLocations: [], conditions };
             const exportResolutions = loadEntrypointsFromExportMap(
                 packageJsonInfo,
                 packageJsonInfo.contents.packageJsonContent.exports,
-                exportState,
+                loadPackageJsonExportsState,
                 extensions);
             if (exportResolutions) {
                 for (const resolution of exportResolutions) {
@@ -2067,7 +2120,7 @@ export interface PackageJsonInfoContents {
  *
  * @internal
  */
- export function getPackageScopeForPath(fileName: string, state: ModuleResolutionState): PackageJsonInfo | undefined {
+export function getPackageScopeForPath(fileName: string, state: ModuleResolutionState): PackageJsonInfo | undefined {
     const parts = getPathComponents(fileName);
     parts.pop();
     while (parts.length > 0) {
@@ -2915,8 +2968,8 @@ export function classicNameResolver(moduleName: string, containingFile: string, 
     }
 }
 
-export function moduleResolutionSupportsResolvingTsExtensions(_compilerOptions: CompilerOptions) {
-    return false;
+export function moduleResolutionSupportsResolvingTsExtensions(compilerOptions: CompilerOptions) {
+    return getEmitModuleResolutionKind(compilerOptions) === ModuleResolutionKind.Bundler;
 }
 
 // Program errors validate that `noEmit` or `emitDeclarationOnly` is also set,

@@ -269,7 +269,7 @@ import {
     modifierToFlag,
     ModuleDeclaration,
     ModuleReference,
-    moduleResolutionRespectsExports,
+    moduleResolutionSupportsPackageJsonExportsAndImports,
     NamedImportBindings,
     Node,
     NodeArray,
@@ -577,7 +577,7 @@ function resolvingModuleSpecifiers<TReturn>(
     // relative path into node_modules), and we want to filter those completions out entirely.
     // Import statement completions always need specifier resolution because the module specifier is
     // part of their `insertText`, not the `codeActions` creating edits away from the cursor.
-    const needsFullResolution = isForImportStatementCompletion || moduleResolutionRespectsExports(getEmitModuleResolutionKind(program.getCompilerOptions()));
+    const needsFullResolution = isForImportStatementCompletion || moduleResolutionSupportsPackageJsonExportsAndImports(getEmitModuleResolutionKind(program.getCompilerOptions()));
     let skippedAny = false;
     let ambientCount = 0;
     let resolvedCount = 0;
