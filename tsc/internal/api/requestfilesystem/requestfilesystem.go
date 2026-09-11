@@ -60,8 +60,10 @@ type RequestFileSystem struct {
 // host filesystem. Its base is always the host, which may be a callback filesystem;
 // inherited request entries are compacted into paths.
 type requestFileSystem struct {
-	kind                  Kind
-	base                  vfs.FS
+	kind Kind
+	// base is the next filesystem in the mounted layer stack.
+	base vfs.FS
+	// host is the original session filesystem used by explicit host symlinks.
 	host                  vfs.FS
 	currentDirectory      string
 	useCaseSensitiveNames bool
@@ -90,69 +92,50 @@ func getRequestFileSystem(fileSystem vfs.FS) *requestFileSystem {
 	return requestFileSystem
 }
 
-// NewLayer creates a request filesystem layer. The supplied base determines path
-// casing and is used for host-backed symlinks when the layer is mounted directly.
-func NewLayer(params *RequestFileSystem, base vfs.FS, currentDirectory string) (layervfs.Layer, error) {
-	return newRequestFileSystemWorker(params, base, currentDirectory)
-}
-
-// NewForUpdate creates a request filesystem for a snapshot update. Layers over
-// request filesystems are compacted eagerly so the result does not retain its
-// base snapshot's filesystem.
-func NewForUpdate(params *RequestFileSystem, base vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (vfs.FS, error) {
-	fileSystem, _, err := NewLayerForUpdate(params, base, currentDirectory, fileChanges)
-	return fileSystem, err
-}
-
-// NewLayerForUpdate creates both the compacted filesystem used for subsequent
-// updates and the uncomposed layer represented by this update.
-func NewLayerForUpdate(params *RequestFileSystem, base vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (vfs.FS, layervfs.Layer, error) {
+// NewForUpdate creates the compacted request layer for a snapshot update.
+func NewForUpdate(params *RequestFileSystem, base layervfs.Layer, host vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (layervfs.Layer, error) {
 	if params == nil {
-		return base, nil, nil
+		return base, nil
 	}
-	baseFileSystem := base
-	hostFileSystem := base
-	if requestBase := getRequestFileSystem(base); requestBase != nil {
-		hostFileSystem = requestBase.host
+	baseRequestFileSystem, _ := base.(*requestFileSystem)
+	baseFileSystem := host
+	if baseRequestFileSystem != nil {
+		baseFileSystem = baseRequestFileSystem.Mount(host)
 	}
 	if params.Kind == KindFull {
-		if requestBase := getRequestFileSystem(base); requestBase != nil {
-			baseFileSystem = requestBase.base
-		}
+		fileChanges.InvalidateAll = true
 	}
 	if params.Kind == KindLayer {
 		addFileChanges(fileChanges, params, baseFileSystem, currentDirectory)
 	}
-	layer, err := NewLayer(params, hostFileSystem, currentDirectory)
+	fileSystem, err := newRequestFileSystemWorker(params, host, currentDirectory)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	fileSystem := layer.(*requestFileSystem)
-	baseRequestFileSystem := getRequestFileSystem(baseFileSystem)
-	if baseRequestFileSystem != nil {
+	if baseRequestFileSystem != nil && params.Kind == KindLayer {
 		compacted := fileSystem.applyTo(*baseRequestFileSystem)
-		return layervfs.New(compacted.base, &compacted), layer, nil
+		return &compacted, nil
 	}
-	return layervfs.New(baseFileSystem, fileSystem), layer, nil
+	return fileSystem, nil
 }
 
-// HasFullFileSystem reports whether fileSystem contains a complete request filesystem.
-func HasFullFileSystem(fileSystem vfs.FS) bool {
-	requestFileSystem := getRequestFileSystem(fileSystem)
+// IsFullLayer reports whether layer contains a complete request filesystem.
+func IsFullLayer(layer layervfs.Layer) bool {
+	requestFileSystem, _ := layer.(*requestFileSystem)
 	return requestFileSystem != nil && requestFileSystem.kind == KindFull
 }
 
-func newRequestFileSystemWorker(params *RequestFileSystem, base vfs.FS, currentDirectory string) (*requestFileSystem, error) {
+func newRequestFileSystemWorker(params *RequestFileSystem, host vfs.FS, currentDirectory string) (*requestFileSystem, error) {
 	if params.Kind != KindFull && params.Kind != KindLayer {
 		return nil, fmt.Errorf("unknown request filesystem kind %q", params.Kind)
 	}
 
 	result := requestFileSystem{
 		kind:                  params.Kind,
-		base:                  base,
-		host:                  base,
+		base:                  host,
+		host:                  host,
 		currentDirectory:      currentDirectory,
-		useCaseSensitiveNames: base.UseCaseSensitiveFileNames(),
+		useCaseSensitiveNames: host.UseCaseSensitiveFileNames(),
 		paths:                 &requestPathNode{},
 	}
 	result.registerDirectory(currentDirectory)
@@ -238,10 +221,6 @@ func (s *requestFileSystem) Shadows(path string) bool {
 	}
 	lookup := s.lookupPath(path)
 	return !lookup.ok || lookup.info != nil || lookup.followedSymlink
-}
-
-func (s *requestFileSystem) Full() bool {
-	return s.kind == KindFull
 }
 
 func (s requestFileSystem) applyTo(base requestFileSystem) requestFileSystem {

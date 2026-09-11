@@ -106,7 +106,6 @@ func (host *SnapshotHost) newSnapshot(
 // project representing createProgram input.
 func (s *Snapshot) cloneForProgram(
 	ctx context.Context,
-	fileSystem vfs.FS,
 	rootFileNames []string,
 	compilerOptions *core.CompilerOptions,
 	projectReferences []*core.ProjectReference,
@@ -129,10 +128,11 @@ func (s *Snapshot) cloneForProgram(
 	}
 
 	start := time.Now()
-	if fileSystem == nil {
-		fileSystem = store.fs
+	baseFS := s.fs.baseFS
+	if baseFS == nil {
+		baseFS = store.fs
 	}
-	fs := newSnapshotFSBuilder(fileSystem, s.fs.overlays, s.fs.overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, store.options.PositionEncoding, store.toPath)
+	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, s.fs.overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, store.options.PositionEncoding, store.toPath, s.fs.topLayer)
 	fileChanges = s.processFileChanges(fs, fileChanges, logger, nil)
 
 	newSnapshotID := store.nextSnapshotID()
@@ -382,6 +382,10 @@ func (s *Snapshot) FileSystem() vfs.FS {
 	return s.fs.fs
 }
 
+func (s *Snapshot) FileSystemLayer() layervfs.Layer {
+	return s.fs.topLayer
+}
+
 func (s *Snapshot) ReadFile(fileName string) (string, bool) {
 	handle := s.GetFile(fileName)
 	if handle == nil {
@@ -417,15 +421,12 @@ type APISnapshotRequest struct {
 // FileSystemChange selects a new filesystem base, adds a layer, or does both.
 // A nil change inherits the base snapshot's filesystem.
 type FileSystemChange struct {
-	base  vfs.FS
-	layer layervfs.Layer
+	baseLayer layervfs.Layer
+	layer     layervfs.Layer
 }
 
-func NewFileSystemChange(base vfs.FS, layer layervfs.Layer) *FileSystemChange {
-	if base == nil && layer == nil {
-		return nil
-	}
-	return &FileSystemChange{base: base, layer: layer}
+func NewFileSystemChange(baseLayer layervfs.Layer, layer layervfs.Layer) *FileSystemChange {
+	return &FileSystemChange{baseLayer: baseLayer, layer: layer}
 }
 
 type ProjectTreeRequest struct {
@@ -574,16 +575,12 @@ func (s *Snapshot) Clone(
 	if baseFS == nil {
 		baseFS = host.fs
 	}
-	var fileSystemLayer layervfs.Layer
+	fileSystemLayer := s.fs.topLayer
 	if change.fileSystem != nil {
-		if change.fileSystem.base != nil {
-			baseFS = change.fileSystem.base
+		if change.fileSystem.baseLayer == nil && s.fs.topLayer != nil {
 			change.fileChanges.InvalidateAll = true
 		}
 		fileSystemLayer = change.fileSystem.layer
-		if fileSystemLayer != nil && fileSystemLayer.Full() {
-			change.fileChanges.InvalidateAll = true
-		}
 	}
 	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, host.options.PositionEncoding, host.toPath, fileSystemLayer)
 	change.fileChanges = s.processFileChanges(fs, change.fileChanges, logger, change.contentMapperContributions)

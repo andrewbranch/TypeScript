@@ -101,10 +101,6 @@ func (l *snapshotOverlayLayer) Shadows(path string) bool {
 	return ok
 }
 
-func (l *snapshotOverlayLayer) Full() bool {
-	return false
-}
-
 type snapshotOverlayFS struct {
 	vfs.FS
 	toPath             func(string) tspath.Path
@@ -600,10 +596,9 @@ func (s *snapshotFSBuilder) Finalize() (*SnapshotFS, bool) {
 		overlays:           s.overlays,
 		overlayDirectories: s.overlayDirectories,
 	}
-	baseFS := layervfs.New(s.baseFS, s.topLayer)
 	return &SnapshotFS{
 		fs:                         layervfs.New(s.fs, s.topLayer, overlayLayer),
-		baseFS:                     baseFS,
+		baseFS:                     s.baseFS,
 		topLayer:                   s.topLayer,
 		overlays:                   s.overlays,
 		overlayDirectories:         s.overlayDirectories,
@@ -826,7 +821,7 @@ func (s *snapshotFSBuilder) markDirtyFiles(change FileChangeSummary) FileChangeS
 		wg := core.NewWorkGroup(false)
 		for uri := range change.Changed.Keys() {
 			path := s.toPath(uri.FileName())
-			if _, ok := s.overlays[path]; ok {
+			if _, ok := s.overlays[path]; ok && (s.topLayer == nil || !s.topLayer.Shadows(uri.FileName())) {
 				filteredChanged.Add(uri)
 				continue
 			}

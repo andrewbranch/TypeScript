@@ -7,7 +7,6 @@ import "github.com/microsoft/TypeScript/tsc/internal/vfs"
 type Layer interface {
 	Mount(base vfs.FS) vfs.FS
 	Shadows(path string) bool
-	Full() bool
 }
 
 // New creates a filesystem from layers ordered from highest to lowest priority.

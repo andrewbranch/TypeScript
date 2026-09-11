@@ -111,7 +111,6 @@ func (s *SnapshotHost) CloneSnapshotWithTemporaryFile(
 func (s *SnapshotHost) CloneSnapshotForProgram(
 	ctx context.Context,
 	baseSnapshot *Snapshot,
-	fileSystem vfs.FS,
 	rootFileNames []string,
 	options *core.CompilerOptions,
 	projectReferences []*core.ProjectReference,
@@ -121,7 +120,6 @@ func (s *SnapshotHost) CloneSnapshotForProgram(
 ) *Snapshot {
 	return baseSnapshot.cloneForProgram(
 		ctx,
-		fileSystem,
 		rootFileNames,
 		options,
 		projectReferences,

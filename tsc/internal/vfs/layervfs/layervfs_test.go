@@ -33,10 +33,6 @@ func (l testLayer) Shadows(path string) bool {
 	return ok
 }
 
-func (l testLayer) Full() bool {
-	return false
-}
-
 func TestNew(t *testing.T) {
 	t.Parallel()
 

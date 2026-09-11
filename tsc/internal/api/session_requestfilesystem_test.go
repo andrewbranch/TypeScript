@@ -16,7 +16,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRequestLayerPrecedesCapturedEditorOverlays(t *testing.T) {
+func TestRequestLayerRemainsAboveCapturedEditorOverlays(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -43,7 +43,7 @@ func TestRequestLayerPrecedesCapturedEditorOverlays(t *testing.T) {
 	snapshot := session.snapshots[withOverlays.Snapshot].snapshot
 	content, ok := snapshot.ReadFile("/shared.ts")
 	assert.Assert(t, ok)
-	assert.Equal(t, content, "editor overlay")
+	assert.Equal(t, content, "inherited request")
 
 	updated, err := session.handleUpdateSnapshot(ctx, &UpdateSnapshotParams{
 		Snapshot: withOverlays.Snapshot,
@@ -59,7 +59,7 @@ func TestRequestLayerPrecedesCapturedEditorOverlays(t *testing.T) {
 	assert.Equal(t, content, "new request")
 	content, ok = snapshot.ReadFile("/overlayOnly.ts")
 	assert.Assert(t, ok)
-	assert.Equal(t, content, "editor overlay")
+	assert.Equal(t, content, "inherited request")
 }
 
 func TestFullRequestLayerOmitsCapturedEditorOverlay(t *testing.T) {
@@ -190,8 +190,7 @@ func TestUpdateSnapshotUsesFullFileSystem(t *testing.T) {
 	assert.Assert(t, ok)
 	assert.Equal(t, contents, `export const value = "updated";`)
 
-	// Temporary snapshots retain the base snapshot's supplied filesystem for
-	// every file other than the temporary overlay.
+	// Request filesystem contents remain above temporary editor overlays.
 	temporary, err := session.handleUpdateTemporarySnapshot(context.Background(), &UpdateTemporarySnapshotParams{
 		Snapshot: response.Snapshot,
 		File:     DocumentIdentifier{FileName: "/src/index.ts"},
@@ -201,7 +200,7 @@ func TestUpdateSnapshotUsesFullFileSystem(t *testing.T) {
 	temporarySnapshot := session.snapshots[temporary.Snapshot].snapshot
 	contents, ok = temporarySnapshot.ReadFile("/src/index.ts")
 	assert.Assert(t, ok)
-	assert.Equal(t, contents, `export const value = "temporary";`)
+	assert.Equal(t, contents, `export const value = "updated";`)
 	contents, ok = temporarySnapshot.ReadFile("/src/other.ts")
 	assert.Assert(t, ok)
 	assert.Equal(t, contents, `export const other = true;`)
@@ -496,8 +495,8 @@ func TestReleaseSnapshotCompactsSoleLayeredFileSystem(t *testing.T) {
 		},
 	})
 	assert.NilError(t, err)
-	baseFileSystem := session.snapshots[base.Snapshot].fileSystem
-	assert.Assert(t, baseFileSystem != nil)
+	baseLayer := session.snapshots[base.Snapshot].snapshot.FileSystemLayer()
+	assert.Assert(t, baseLayer != nil)
 
 	layered, err := session.handleUpdateSnapshot(context.Background(), &UpdateSnapshotParams{
 		Snapshot: base.Snapshot,
@@ -513,8 +512,8 @@ func TestReleaseSnapshotCompactsSoleLayeredFileSystem(t *testing.T) {
 	assert.NilError(t, err)
 	layeredSnapshotData := session.snapshots[layered.Snapshot]
 	layeredSnapshot := layeredSnapshotData.snapshot
-	layeredFileSystem := layeredSnapshotData.fileSystem
-	assert.Assert(t, layeredFileSystem != nil)
+	layeredLayer := layeredSnapshot.FileSystemLayer()
+	assert.Assert(t, layeredLayer != nil)
 	assert.Equal(t, session.snapshots[base.Snapshot].refCount, 1)
 
 	_, err = session.handleRelease(context.Background(), &ReleaseParams{Snapshot: base.Snapshot})
@@ -534,7 +533,7 @@ func TestReleaseSnapshotCompactsSoleLayeredFileSystem(t *testing.T) {
 	assert.Assert(t, !ok)
 	_, ok = layeredSnapshot.ReadFile("/host.ts")
 	assert.Assert(t, !ok)
-	assert.Assert(t, requestfilesystem.HasFullFileSystem(layeredFileSystem))
+	assert.Assert(t, requestfilesystem.IsFullLayer(layeredLayer))
 }
 
 func TestEagerSnapshotReleaseDoesNotRetainFileSystemHistory(t *testing.T) {
@@ -576,9 +575,9 @@ func TestEagerSnapshotReleaseDoesNotRetainFileSystemHistory(t *testing.T) {
 		current := session.snapshots[response.Snapshot]
 		assert.Assert(t, current != nil)
 		assert.Equal(t, current.refCount, 1)
-		fileSystem := current.fileSystem
-		assert.Assert(t, fileSystem != nil)
-		assert.Assert(t, requestfilesystem.HasFullFileSystem(fileSystem))
+		fileSystemLayer := current.snapshot.FileSystemLayer()
+		assert.Assert(t, fileSystemLayer != nil)
+		assert.Assert(t, requestfilesystem.IsFullLayer(fileSystemLayer))
 		actual, ok := current.snapshot.ReadFile("/pkg/index.ts")
 		assert.Assert(t, ok)
 		assert.Equal(t, actual, content)
@@ -621,9 +620,9 @@ func TestSnapshotReleaseCompactsChainedFileSystems(t *testing.T) {
 		current := session.snapshots[responses[i].Snapshot]
 		assert.Assert(t, current != nil)
 		assert.Equal(t, current.refCount, 1)
-		fileSystem := current.fileSystem
-		assert.Assert(t, fileSystem != nil)
-		assert.Assert(t, requestfilesystem.HasFullFileSystem(fileSystem))
+		fileSystemLayer := current.snapshot.FileSystemLayer()
+		assert.Assert(t, fileSystemLayer != nil)
+		assert.Assert(t, requestfilesystem.IsFullLayer(fileSystemLayer))
 		contents, ok := current.snapshot.ReadFile("/pkg/index.ts")
 		assert.Assert(t, ok)
 		assert.Equal(t, contents, strconv.Itoa(i))
@@ -653,7 +652,7 @@ func TestTemporarySnapshotRetainsLayeredFileSystemHistory(t *testing.T) {
 		},
 	})
 	assert.NilError(t, err)
-	layeredFileSystem := session.snapshots[layered.Snapshot].fileSystem
+	layeredLayer := session.snapshots[layered.Snapshot].snapshot.FileSystemLayer()
 	temporary, err := session.handleUpdateTemporarySnapshot(context.Background(), &UpdateTemporarySnapshotParams{
 		Snapshot: layered.Snapshot,
 		File:     DocumentIdentifier{FileName: "/pkg/index.ts"},
@@ -668,10 +667,10 @@ func TestTemporarySnapshotRetainsLayeredFileSystemHistory(t *testing.T) {
 
 	current := session.snapshots[temporary.Snapshot]
 	assert.Assert(t, current != nil)
-	fileSystem := current.fileSystem
-	assert.Assert(t, fileSystem != nil)
-	assert.Assert(t, fileSystem == layeredFileSystem)
-	assert.Assert(t, requestfilesystem.HasFullFileSystem(fileSystem))
+	fileSystemLayer := current.snapshot.FileSystemLayer()
+	assert.Assert(t, fileSystemLayer != nil)
+	assert.Assert(t, fileSystemLayer == layeredLayer)
+	assert.Assert(t, requestfilesystem.IsFullLayer(fileSystemLayer))
 }
 
 func TestSnapshotReleaseCompactionSupportsConcurrentReaders(t *testing.T) {
@@ -698,7 +697,7 @@ func TestSnapshotReleaseCompactionSupportsConcurrentReaders(t *testing.T) {
 		},
 	})
 	assert.NilError(t, err)
-	fileSystem := session.snapshots[layered.Snapshot].fileSystem
+	fileSystem := session.snapshots[layered.Snapshot].snapshot.FileSystem()
 
 	started := make(chan struct{})
 	done := make(chan struct{})

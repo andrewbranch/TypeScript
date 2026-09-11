@@ -21,7 +21,13 @@ func newRequestFileSystem(params *RequestFileSystem, base vfs.FS, currentDirecto
 
 func newLayeredRequestFileSystem(params *RequestFileSystem, base vfs.FS, currentDirectory string) (*requestFileSystem, error) {
 	var fileChanges project.FileChangeSummary
-	fileSystem, err := NewForUpdate(params, base, currentDirectory, &fileChanges)
+	var baseLayer layervfs.Layer
+	host := base
+	if requestBase := getRequestFileSystem(base); requestBase != nil {
+		baseLayer = requestBase
+		host = requestBase.host
+	}
+	fileSystem, err := NewForUpdate(params, baseLayer, host, currentDirectory, &fileChanges)
 	if err != nil {
 		return nil, err
 	}
@@ -107,20 +113,20 @@ func TestInitializeForUpdate(t *testing.T) {
 		base, err := NewForUpdate(&RequestFileSystem{
 			Kind:  KindFull,
 			Files: map[string]string{"/base.ts": "base"},
-		}, host, "/", &fileChanges)
+		}, nil, host, "/", &fileChanges)
 		assert.NilError(t, err)
 
 		layered, err := NewForUpdate(&RequestFileSystem{
 			Kind:  KindLayer,
 			Files: map[string]string{"/layered.ts": "layered"},
-		}, base, "/", &fileChanges)
+		}, base, host, "/", &fileChanges)
 		assert.NilError(t, err)
 		requestFileSystem, ok := layered.(*requestFileSystem)
 		assert.Assert(t, ok)
 		assert.Assert(t, requestFileSystem.baseFileSystem() == host)
 		assert.Equal(t, requestFileSystem.kind, KindFull)
-		assert.Assert(t, layered.FileExists("/base.ts"))
-		assert.Assert(t, layered.FileExists("/layered.ts"))
+		assert.Assert(t, requestFileSystem.FileExists("/base.ts"))
+		assert.Assert(t, requestFileSystem.FileExists("/layered.ts"))
 	})
 
 	t.Run("filesystem layers over a host-backed snapshot", func(t *testing.T) {
@@ -135,12 +141,13 @@ func TestInitializeForUpdate(t *testing.T) {
 			Directories: map[string]RequestDirectoryEntries{
 				"/dir": {Files: []string{"cached.ts"}, Directories: []string{}},
 			},
-		}, host, "/", &fileChanges)
+		}, nil, host, "/", &fileChanges)
 		assert.NilError(t, err)
+		mounted := fileSystem.Mount(host)
 		// Change generation may inspect the old directory; reading the supplied
 		// complete listing itself must not fall back to the host.
 		host.SeenFiles.Delete("/dir")
-		assert.DeepEqual(t, fileSystem.GetAccessibleEntries("/dir").Files, []string{"cached.ts"})
+		assert.DeepEqual(t, mounted.GetAccessibleEntries("/dir").Files, []string{"cached.ts"})
 		assert.Assert(t, !host.SeenFiles.Has("/dir"))
 	})
 
@@ -159,40 +166,13 @@ func TestInitializeForUpdate(t *testing.T) {
 		fileSystem, err := NewForUpdate(&RequestFileSystem{
 			Kind:  KindFull,
 			Files: map[string]string{"/replacement.ts": "replacement"},
-		}, base, "/", &fileChanges)
+		}, base, host, "/", &fileChanges)
 		assert.NilError(t, err)
-		requestFileSystem := getRequestFileSystem(fileSystem)
+		requestFileSystem, ok := fileSystem.(*requestFileSystem)
+		assert.Assert(t, ok)
 		assert.Assert(t, requestFileSystem.baseFileSystem() == host)
 		assert.Assert(t, getRequestFileSystem(requestFileSystem.baseFileSystem()) == nil)
 	})
-}
-
-func TestRequestFileSystemLayer(t *testing.T) {
-	t.Parallel()
-
-	host := vfstest.FromMap(map[string]string{
-		"/host.ts":   "host",
-		"/shared.ts": "host",
-	}, true)
-	layer, err := NewLayer(&RequestFileSystem{
-		Kind: KindLayer,
-		Files: map[string]string{
-			"/request.ts": "request",
-			"/shared.ts":  "request",
-		},
-	}, host, "/")
-	assert.NilError(t, err)
-
-	fsys := layervfs.New(host, layer)
-	for path, expected := range map[string]string{
-		"/host.ts":    "host",
-		"/request.ts": "request",
-		"/shared.ts":  "request",
-	} {
-		content, ok := fsys.ReadFile(path)
-		assert.Assert(t, ok, path)
-		assert.Equal(t, content, expected)
-	}
 }
 
 func TestRequestFileSystemCompleteDirectoryListingsFullExplicitReplacement(t *testing.T) {
