@@ -9,6 +9,7 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/project"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
+	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/trackingvfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/vfstest"
 	"gotest.tools/v3/assert"
@@ -164,6 +165,34 @@ func TestInitializeForUpdate(t *testing.T) {
 		assert.Assert(t, requestFileSystem.baseFileSystem() == host)
 		assert.Assert(t, getRequestFileSystem(requestFileSystem.baseFileSystem()) == nil)
 	})
+}
+
+func TestRequestFileSystemLayer(t *testing.T) {
+	t.Parallel()
+
+	host := vfstest.FromMap(map[string]string{
+		"/host.ts":   "host",
+		"/shared.ts": "host",
+	}, true)
+	layer, err := NewLayer(&RequestFileSystem{
+		Kind: KindLayer,
+		Files: map[string]string{
+			"/request.ts": "request",
+			"/shared.ts":  "request",
+		},
+	}, host, "/")
+	assert.NilError(t, err)
+
+	fsys := layervfs.New(host, layer)
+	for path, expected := range map[string]string{
+		"/host.ts":    "host",
+		"/request.ts": "request",
+		"/shared.ts":  "request",
+	} {
+		content, ok := fsys.ReadFile(path)
+		assert.Assert(t, ok, path)
+		assert.Equal(t, content, expected)
+	}
 }
 
 func TestRequestFileSystemCompleteDirectoryListingsFullExplicitReplacement(t *testing.T) {

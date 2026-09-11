@@ -1,6 +1,9 @@
 package project
 
 import (
+	"errors"
+	"io/fs"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -14,6 +17,7 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/cachedvfs"
+	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 	"github.com/zeebo/xxh3"
 )
 
@@ -56,6 +60,8 @@ func (s *realpathAliasSet) Clone() *realpathAliasSet {
 type SnapshotFS struct {
 	toPath             func(fileName string) tspath.Path
 	fs                 vfs.FS
+	baseFS             vfs.FS
+	topLayer           layervfs.Layer
 	overlays           map[tspath.Path]*Overlay
 	overlayDirectories map[tspath.Path]map[tspath.Path]string
 	diskFiles          map[tspath.Path]*diskFile
@@ -69,6 +75,284 @@ type SnapshotFS struct {
 
 type memoizedDiskFile func() FileHandle
 
+type snapshotOverlayLayer struct {
+	toPath             func(string) tspath.Path
+	overlays           map[tspath.Path]*Overlay
+	overlayDirectories map[tspath.Path]map[tspath.Path]string
+}
+
+var _ layervfs.Layer = (*snapshotOverlayLayer)(nil)
+
+func (l *snapshotOverlayLayer) Mount(base vfs.FS) vfs.FS {
+	return &snapshotOverlayFS{
+		FS:                 base,
+		toPath:             l.toPath,
+		overlays:           l.overlays,
+		overlayDirectories: l.overlayDirectories,
+	}
+}
+
+func (l *snapshotOverlayLayer) Shadows(path string) bool {
+	key := l.toPath(path)
+	if _, ok := l.overlays[key]; ok {
+		return true
+	}
+	_, ok := l.overlayDirectories[key]
+	return ok
+}
+
+func (l *snapshotOverlayLayer) Full() bool {
+	return false
+}
+
+type snapshotOverlayFS struct {
+	vfs.FS
+	toPath             func(string) tspath.Path
+	overlays           map[tspath.Path]*Overlay
+	overlayDirectories map[tspath.Path]map[tspath.Path]string
+}
+
+var _ vfs.FS = (*snapshotOverlayFS)(nil)
+
+func (s *snapshotOverlayFS) FileExists(path string) bool {
+	key := s.toPath(path)
+	if _, ok := s.overlays[key]; ok {
+		return true
+	}
+	if _, ok := s.overlayDirectories[key]; ok {
+		return false
+	}
+	return s.FS.FileExists(path)
+}
+
+func (s *snapshotOverlayFS) ReadFile(path string) (string, bool) {
+	key := s.toPath(path)
+	if overlay, ok := s.overlays[key]; ok {
+		return overlay.Content(), true
+	}
+	if _, ok := s.overlayDirectories[key]; ok {
+		return "", false
+	}
+	return s.FS.ReadFile(path)
+}
+
+func (s *snapshotOverlayFS) DirectoryExists(path string) bool {
+	key := s.toPath(path)
+	if _, ok := s.overlays[key]; ok {
+		return false
+	}
+	if _, ok := s.overlayDirectories[key]; ok {
+		return true
+	}
+	return s.FS.DirectoryExists(path)
+}
+
+func (s *snapshotOverlayFS) GetAccessibleEntries(path string) vfs.Entries {
+	if _, ok := s.overlays[s.toPath(path)]; ok {
+		return vfs.Entries{}
+	}
+	entries := s.FS.GetAccessibleEntries(path)
+	children, ok := s.overlayDirectories[s.toPath(path)]
+	if !ok {
+		return entries
+	}
+	entries.Files = slices.Clone(entries.Files)
+	entries.Directories = slices.Clone(entries.Directories)
+	entries.Symlinks = maps.Clone(entries.Symlinks)
+	for childPath, childName := range children {
+		isFile := false
+		if _, ok := s.overlays[childPath]; ok {
+			isFile = true
+		}
+		entries = mergeSnapshotEntry(entries, childName, isFile, s.UseCaseSensitiveFileNames())
+	}
+	slices.Sort(entries.Files)
+	slices.Sort(entries.Directories)
+	return entries
+}
+
+func mergeSnapshotEntry(entries vfs.Entries, name string, isFile bool, useCaseSensitiveNames bool) vfs.Entries {
+	equal := func(left string) bool {
+		return tspath.GetCanonicalFileName(left, useCaseSensitiveNames) == tspath.GetCanonicalFileName(name, useCaseSensitiveNames)
+	}
+	entries.Files = slices.DeleteFunc(entries.Files, equal)
+	entries.Directories = slices.DeleteFunc(entries.Directories, equal)
+	for symlink := range entries.Symlinks {
+		if equal(symlink) {
+			delete(entries.Symlinks, symlink)
+		}
+	}
+	if isFile {
+		entries.Files = append(entries.Files, name)
+	} else {
+		entries.Directories = append(entries.Directories, name)
+	}
+	return entries
+}
+
+func (s *snapshotOverlayFS) Stat(path string) vfs.FileInfo {
+	pathKey := s.toPath(path)
+	if overlay, ok := s.overlays[pathKey]; ok {
+		return overlayFileInfo{overlay: overlay}
+	}
+	if _, ok := s.overlayDirectories[pathKey]; ok {
+		if info := s.FS.Stat(path); info != nil && info.IsDir() {
+			return info
+		}
+		return overlayDirectoryInfo{name: tspath.GetBaseFileName(path)}
+	}
+	return s.FS.Stat(path)
+}
+
+func (s *snapshotOverlayFS) Realpath(path string) string {
+	pathKey := s.toPath(path)
+	if _, ok := s.overlays[pathKey]; ok {
+		return path
+	}
+	if _, ok := s.overlayDirectories[pathKey]; ok && !s.FS.DirectoryExists(path) {
+		return path
+	}
+	return s.FS.Realpath(path)
+}
+
+func (s *snapshotOverlayFS) WalkDir(root string, walkFn vfs.WalkDirFunc) error {
+	if !s.Shadows(root) {
+		return s.FS.WalkDir(root, walkFn)
+	}
+	info := s.Stat(root)
+	if info == nil {
+		return walkFn(root, nil, vfs.ErrNotExist)
+	}
+	visited := make(map[string]struct{})
+	if err := s.walkDir(root, fs.FileInfoToDirEntry(info), walkFn, visited); errors.Is(err, fs.SkipAll) {
+		return nil
+	} else {
+		return err
+	}
+}
+
+func (s *snapshotOverlayFS) WriteFile(path string, data string) error {
+	if s.Shadows(path) {
+		return vfs.ErrPermission
+	}
+	return s.FS.WriteFile(path, data)
+}
+
+func (s *snapshotOverlayFS) AppendFile(path string, data string) error {
+	if s.Shadows(path) {
+		return vfs.ErrPermission
+	}
+	return s.FS.AppendFile(path, data)
+}
+
+func (s *snapshotOverlayFS) Remove(path string) error {
+	if s.Shadows(path) {
+		return vfs.ErrPermission
+	}
+	return s.FS.Remove(path)
+}
+
+func (s *snapshotOverlayFS) Chtimes(path string, aTime time.Time, mTime time.Time) error {
+	if s.Shadows(path) {
+		return vfs.ErrPermission
+	}
+	return s.FS.Chtimes(path, aTime, mTime)
+}
+
+func (s *snapshotOverlayFS) Shadows(path string) bool {
+	key := s.toPath(path)
+	if _, ok := s.overlays[key]; ok {
+		return true
+	}
+	_, ok := s.overlayDirectories[key]
+	return ok
+}
+
+func (s *snapshotOverlayFS) walkDir(path string, entry vfs.DirEntry, walkFn vfs.WalkDirFunc, visited map[string]struct{}) error {
+	realpath := s.Realpath(path)
+	if _, ok := visited[realpath]; ok {
+		return nil
+	}
+	visited[realpath] = struct{}{}
+	if err := walkFn(path, entry, nil); err != nil {
+		if errors.Is(err, fs.SkipDir) && entry.IsDir() {
+			return nil
+		}
+		return err
+	}
+	if !entry.IsDir() {
+		return nil
+	}
+	entries := s.GetAccessibleEntries(path)
+	names := append(slices.Clone(entries.Directories), entries.Files...)
+	slices.Sort(names)
+	baseEntries := make(map[tspath.Path]vfs.DirEntry)
+	_ = s.FS.WalkDir(path, func(childPath string, entry vfs.DirEntry, err error) error {
+		if err != nil || entry == nil {
+			return nil
+		}
+		childKey := s.toPath(childPath)
+		if childKey == s.toPath(path) {
+			return nil
+		}
+		if childKey.GetDirectoryPath() != s.toPath(path) {
+			return fs.SkipDir
+		}
+		baseEntries[childKey] = entry
+		if entry.IsDir() {
+			return fs.SkipDir
+		}
+		return nil
+	})
+	for _, name := range names {
+		childPath := tspath.CombinePaths(path, name)
+		baseEntry := baseEntries[s.toPath(childPath)]
+		_, listedAsSymlink := entries.Symlinks[name]
+		if !s.Shadows(childPath) && (listedAsSymlink || baseEntry != nil && baseEntry.Type()&fs.ModeSymlink != 0) {
+			if err := walkFn(childPath, baseEntry, nil); err != nil {
+				if errors.Is(err, fs.SkipDir) {
+					continue
+				}
+				return err
+			}
+			continue
+		}
+		childInfo := s.Stat(childPath)
+		if childInfo == nil {
+			continue
+		}
+		if err := s.walkDir(childPath, fs.FileInfoToDirEntry(childInfo), walkFn, visited); err != nil {
+			if errors.Is(err, fs.SkipDir) {
+				continue
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+type overlayFileInfo struct {
+	overlay *Overlay
+}
+
+func (i overlayFileInfo) Name() string       { return tspath.GetBaseFileName(i.overlay.FileName()) }
+func (i overlayFileInfo) Size() int64        { return int64(len(i.overlay.Content())) }
+func (i overlayFileInfo) Mode() fs.FileMode  { return 0o444 }
+func (i overlayFileInfo) ModTime() time.Time { return time.Time{} }
+func (i overlayFileInfo) IsDir() bool        { return false }
+func (i overlayFileInfo) Sys() any           { return nil }
+
+type overlayDirectoryInfo struct {
+	name string
+}
+
+func (i overlayDirectoryInfo) Name() string       { return i.name }
+func (i overlayDirectoryInfo) Size() int64        { return 0 }
+func (i overlayDirectoryInfo) Mode() fs.FileMode  { return fs.ModeDir | 0o555 }
+func (i overlayDirectoryInfo) ModTime() time.Time { return time.Time{} }
+func (i overlayDirectoryInfo) IsDir() bool        { return true }
+func (i overlayDirectoryInfo) Sys() any           { return nil }
+
 func (s *SnapshotFS) FS() vfs.FS {
 	return s.fs
 }
@@ -78,6 +362,9 @@ func (s *SnapshotFS) GetFile(fileName string) FileHandle {
 }
 
 func (s *SnapshotFS) FileExists(fileName string, path tspath.Path) bool {
+	if s.topLayer != nil && s.topLayer.Shadows(fileName) {
+		return s.fs.FileExists(fileName)
+	}
 	if _, ok := s.overlays[path]; ok {
 		return true
 	}
@@ -88,6 +375,19 @@ func (s *SnapshotFS) FileExists(fileName string, path tspath.Path) bool {
 }
 
 func (s *SnapshotFS) GetFileByPath(fileName string, path tspath.Path) FileHandle {
+	if s.topLayer != nil && s.topLayer.Shadows(fileName) {
+		if file, ok := s.diskFiles[path]; ok {
+			return file
+		}
+		newEntry := memoizedDiskFile(sync.OnceValue(func() FileHandle {
+			if content, ok := s.fs.ReadFile(fileName); ok {
+				return newDiskFile(fileName, content)
+			}
+			return nil
+		}))
+		entry, _ := s.readFiles.LoadOrStore(path, newEntry)
+		return entry()
+	}
 	if file, ok := s.overlays[path]; ok {
 		return file
 	}
@@ -105,6 +405,9 @@ func (s *SnapshotFS) GetFileByPath(fileName string, path tspath.Path) FileHandle
 }
 
 func (s *SnapshotFS) GetAccessibleEntries(directoryName string) vfs.Entries {
+	if s.topLayer != nil && s.topLayer.Shadows(directoryName) {
+		return s.fs.GetAccessibleEntries(directoryName)
+	}
 	var entries vfs.Entries
 	path := s.toPath(directoryName)
 	if diskDirectories, ok := s.diskDirectories[path]; ok {
@@ -134,6 +437,9 @@ func (s *SnapshotFS) isFile(path tspath.Path) bool {
 
 type snapshotFSBuilder struct {
 	fs                         vfs.FS
+	baseFS                     vfs.FS
+	viewFS                     vfs.FS
+	topLayer                   layervfs.Layer
 	prevOverlays               map[tspath.Path]*Overlay
 	overlays                   map[tspath.Path]*Overlay
 	overlayDirectories         map[tspath.Path]map[tspath.Path]string
@@ -153,6 +459,7 @@ func newSnapshotFSBuilder(
 	nodeModulesRealpathAliases map[tspath.Path]*realpathAliasSet,
 	positionEncoding lsproto.PositionEncodingKind,
 	toPath func(fileName string) tspath.Path,
+	topLayers ...layervfs.Layer,
 ) *snapshotFSBuilder {
 	cachedFS := cachedvfs.From(fs)
 	cachedFS.Enable()
@@ -180,8 +487,20 @@ func newSnapshotFSBuilder(
 		}
 	}
 
+	overlayLayer := &snapshotOverlayLayer{
+		toPath:             toPath,
+		overlays:           overlays,
+		overlayDirectories: overlayDirectories,
+	}
+	var topLayer layervfs.Layer
+	if len(topLayers) > 0 {
+		topLayer = topLayers[0]
+	}
 	return &snapshotFSBuilder{
 		fs:                         cachedFS,
+		baseFS:                     fs,
+		viewFS:                     layervfs.New(cachedFS, topLayer, overlayLayer),
+		topLayer:                   topLayer,
 		prevOverlays:               prevOverlays,
 		overlays:                   overlays,
 		overlayDirectories:         overlayDirectories,
@@ -193,7 +512,7 @@ func newSnapshotFSBuilder(
 }
 
 func (s *snapshotFSBuilder) FS() vfs.FS {
-	return s.fs
+	return s.viewFS
 }
 
 func (s *snapshotFSBuilder) Finalize() (*SnapshotFS, bool) {
@@ -276,8 +595,16 @@ func (s *snapshotFSBuilder) Finalize() (*SnapshotFS, bool) {
 
 	nodeModulesRealpathAliases, aliasesChanged := s.nodeModulesRealpathAliases.Finalize()
 
+	overlayLayer := &snapshotOverlayLayer{
+		toPath:             s.toPath,
+		overlays:           s.overlays,
+		overlayDirectories: s.overlayDirectories,
+	}
+	baseFS := layervfs.New(s.baseFS, s.topLayer)
 	return &SnapshotFS{
-		fs:                         s.fs,
+		fs:                         layervfs.New(s.fs, s.topLayer, overlayLayer),
+		baseFS:                     baseFS,
+		topLayer:                   s.topLayer,
 		overlays:                   s.overlays,
 		overlayDirectories:         s.overlayDirectories,
 		diskFiles:                  diskFiles,
@@ -298,6 +625,9 @@ func (s *snapshotFSBuilder) GetFile(fileName string) FileHandle {
 }
 
 func (s *snapshotFSBuilder) FileExists(fileName string, path tspath.Path) bool {
+	if s.topLayer != nil && s.topLayer.Shadows(fileName) {
+		return s.viewFS.FileExists(fileName)
+	}
 	if _, ok := s.overlays[path]; ok {
 		return true
 	}
@@ -314,6 +644,9 @@ func (s *snapshotFSBuilder) FileExists(fileName string, path tspath.Path) bool {
 }
 
 func (s *snapshotFSBuilder) GetFileByPath(fileName string, path tspath.Path) FileHandle {
+	if s.topLayer != nil && s.topLayer.Shadows(fileName) {
+		return s.getDiskFile(fileName, path, false)
+	}
 	if file, ok := s.overlays[path]; ok {
 		return file
 	}
@@ -321,6 +654,9 @@ func (s *snapshotFSBuilder) GetFileByPath(fileName string, path tspath.Path) Fil
 }
 
 func (s *snapshotFSBuilder) GetAccessibleEntries(path string) vfs.Entries {
+	if s.topLayer != nil {
+		return s.viewFS.GetAccessibleEntries(path)
+	}
 	entries := s.fs.GetAccessibleEntries(path)
 	p := s.toPath(path)
 	overlayDirectories, ok := s.overlayDirectories[p]
@@ -355,6 +691,13 @@ func (s *snapshotFSBuilder) getDiskFile(fileName string, path tspath.Path, force
 	return nil
 }
 
+func (s *snapshotFSBuilder) readDiskFile(fileName string) (string, bool) {
+	if s.topLayer != nil && s.topLayer.Shadows(fileName) {
+		return s.viewFS.ReadFile(fileName)
+	}
+	return s.fs.ReadFile(fileName)
+}
+
 // recordRealpathAlias checks if fileName is accessed through a symlink and, if so,
 // records a mapping from the realpath-based key to the symlink-based key.
 // This is only called for files inside node_modules where symlinks are common.
@@ -383,7 +726,7 @@ func (s *snapshotFSBuilder) reloadEntry(entry *dirty.SyncMapEntry[tspath.Path, *
 		return nil
 	}
 	// Read file outside the lock to avoid blocking other goroutines.
-	content, ok := s.fs.ReadFile(fileName)
+	content, ok := s.readDiskFile(fileName)
 	entry.Locked(func(e dirty.Value[*diskFile]) {
 		if e.Value() == nil {
 			return
@@ -413,7 +756,7 @@ func (s *snapshotFSBuilder) reloadEntryIfNeeded(entry *dirty.SyncMapEntry[tspath
 	})
 	if fileName != "" {
 		// Read file outside the lock to avoid blocking other goroutines.
-		content, ok := s.fs.ReadFile(fileName)
+		content, ok := s.readDiskFile(fileName)
 		entry.Locked(func(e dirty.Value[*diskFile]) {
 			if e.Value() == nil || e.Value().MatchesDiskText() {
 				return // another goroutine already reloaded it
@@ -519,7 +862,7 @@ func (s *snapshotFSBuilder) reloadEntryIfContentChanged(entry *dirty.SyncMapEntr
 	if file == nil {
 		return true
 	}
-	content, ok := s.fs.ReadFile(file.fileName)
+	content, ok := s.readDiskFile(file.fileName)
 	changed = true
 	entry.Locked(func(e dirty.Value[*diskFile]) {
 		cur := e.Value()

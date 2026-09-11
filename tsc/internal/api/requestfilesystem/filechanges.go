@@ -34,22 +34,9 @@ func addFileChanges(summary *project.FileChangeSummary, request *RequestFileSyst
 			}
 		}
 	}
-	overlayFiles := make(map[tspath.Path]struct{}, len(request.Files))
-	for fileName := range request.Files {
-		absoluteFileName := tspath.GetNormalizedAbsolutePath(fileName, currentDirectory)
-		overlayFiles[toPath(absoluteFileName)] = struct{}{}
-		addChangeAndAliases(absoluteFileName, false)
-	}
-	for _, removedPath := range request.RemovedPaths {
-		absoluteFileName := tspath.GetNormalizedAbsolutePath(removedPath, currentDirectory)
-		if _, replaced := overlayFiles[toPath(absoluteFileName)]; replaced {
-			continue
-		}
-		addChangeAndAliases(absoluteFileName, true)
-	}
-	// Replacing a listing or a symlink can change every cached descendant.
-	// Delete events expand through the snapshot's cached directory tree and create
-	// events that refresh wildcard roots and previously missing module resolutions.
+	// Replacing a path's type, a listing, or a symlink can change every cached
+	// descendant. Delete events expand through the snapshot's cached directory
+	// tree and create events refresh wildcard roots and missing resolutions.
 	addReplacement := func(path string) {
 		absolutePath := tspath.GetNormalizedAbsolutePath(path, currentDirectory)
 		addChangeAndAliases(absolutePath, true)
@@ -59,6 +46,23 @@ func addFileChanges(summary *project.FileChangeSummary, request *RequestFileSyst
 				summary.Created.Add(lsconv.FileNameToDocumentURI(alias))
 			}
 		}
+	}
+	overlayFiles := make(map[tspath.Path]struct{}, len(request.Files))
+	for fileName := range request.Files {
+		absoluteFileName := tspath.GetNormalizedAbsolutePath(fileName, currentDirectory)
+		overlayFiles[toPath(absoluteFileName)] = struct{}{}
+		if baseFS.DirectoryExists(absoluteFileName) {
+			addReplacement(absoluteFileName)
+		} else {
+			addChangeAndAliases(absoluteFileName, false)
+		}
+	}
+	for _, removedPath := range request.RemovedPaths {
+		absoluteFileName := tspath.GetNormalizedAbsolutePath(removedPath, currentDirectory)
+		if _, replaced := overlayFiles[toPath(absoluteFileName)]; replaced {
+			continue
+		}
+		addChangeAndAliases(absoluteFileName, true)
 	}
 	for directoryName := range request.Directories {
 		addReplacement(directoryName)

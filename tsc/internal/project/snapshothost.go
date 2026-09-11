@@ -84,9 +84,7 @@ func (s *SnapshotHost) CloneSnapshot(
 		fileChanges: fileChanges,
 	}
 	if apiRequest != nil {
-		change.fs = apiRequest.FileSystem
-		change.fileSystemOverride = apiRequest.FileSystem != nil
-		change.replaceFileSystem = apiRequest.ReplaceFileSystem
+		change.fileSystem = apiRequest.FileSystem
 	}
 	snapshot := s.update(ctx, baseSnapshot, change)
 	return snapshot, snapshot.apiError
@@ -102,11 +100,10 @@ func (s *SnapshotHost) update(ctx context.Context, baseSnapshot *Snapshot, chang
 func (s *SnapshotHost) CloneSnapshotWithTemporaryFile(
 	ctx context.Context,
 	baseSnapshot *Snapshot,
-	fileSystem vfs.FS,
 	uri lsproto.DocumentUri,
 	newText string,
 ) (*Snapshot, error) {
-	return baseSnapshot.cloneWithTemporaryFile(ctx, fileSystem, uri, newText)
+	return baseSnapshot.cloneWithTemporaryFile(ctx, uri, newText)
 }
 
 // CloneSnapshotForProgram derives an isolated snapshot containing one synthetic
@@ -154,6 +151,7 @@ func (s *SnapshotHost) newRootSnapshot(id uint64, relativePatternSupport bool) *
 		&SnapshotFS{
 			toPath:   s.toPath,
 			fs:       s.fs,
+			baseFS:   s.fs,
 			overlays: make(map[tspath.Path]*Overlay),
 		},
 		&ConfigFileRegistry{},

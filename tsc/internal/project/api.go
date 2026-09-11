@@ -1,10 +1,6 @@
 package project
 
-import (
-	"context"
-
-	"github.com/microsoft/TypeScript/tsc/internal/vfs"
-)
+import "context"
 
 // APIUpdate creates a new snapshot incorporating the given file changes and the
 // supplied API open/close request. The apiRequest may open or close projects and
@@ -20,20 +16,16 @@ func (s *Session) APIUpdate(ctx context.Context, apiFileChanges FileChangeSummar
 
 	fileChanges, overlays, ataChanges, _ := s.flushChanges(ctx)
 	mergeFileChangeSummary(&fileChanges, apiFileChanges)
-	var fs vfs.FS
-	var replaceFileSystem bool
+	var fileSystem *FileSystemChange
 	if apiRequest != nil {
-		fs = apiRequest.FileSystem
-		replaceFileSystem = apiRequest.ReplaceFileSystem
+		fileSystem = apiRequest.FileSystem
 	}
 
 	newSnapshot := s.updateSnapshotRef(ctx, overlays, SnapshotChange{
-		apiRequest:         apiRequest,
-		fs:                 fs,
-		fileSystemOverride: fs != nil,
-		replaceFileSystem:  replaceFileSystem,
-		fileChanges:        fileChanges,
-		ataChanges:         ataChanges,
+		apiRequest:  apiRequest,
+		fileSystem:  fileSystem,
+		fileChanges: fileChanges,
+		ataChanges:  ataChanges,
 	})
 	return newSnapshot, newSnapshot.apiError
 }

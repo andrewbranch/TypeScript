@@ -1,11 +1,14 @@
 package project
 
 import (
+	"io/fs"
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/microsoft/TypeScript/tsc/internal/collections"
+	"github.com/microsoft/TypeScript/tsc/internal/core"
 	"github.com/microsoft/TypeScript/tsc/internal/lsp/lsproto"
 	"github.com/microsoft/TypeScript/tsc/internal/project/dirty"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
@@ -732,6 +735,142 @@ func TestSnapshotFS(t *testing.T) {
 		// Should contain both disk file and overlay file (both as basenames)
 		assert.Assert(t, slices.Contains(entries.Files, "disk.ts"), "should contain disk.ts")
 		assert.Assert(t, slices.Contains(entries.Files, "overlay.ts"), "should contain overlay.ts")
+	})
+}
+
+func TestSnapshotOverlayLayer(t *testing.T) {
+	t.Parallel()
+
+	base := vfstest.FromMap(map[string]string{
+		"/src/disk.ts":   "disk",
+		"/src/shared.ts": "disk",
+	}, true)
+	overlays := map[tspath.Path]*Overlay{
+		"/src/new.ts":    newOverlay("/src/new.ts", "new", 1, core.ScriptKindTS),
+		"/src/shared.ts": newOverlay("/src/shared.ts", "overlay", 1, core.ScriptKindTS),
+	}
+	layer := &snapshotOverlayLayer{
+		toPath:   func(path string) tspath.Path { return tspath.Path(path) },
+		overlays: overlays,
+		overlayDirectories: map[tspath.Path]map[tspath.Path]string{
+			"/": {
+				"/src": "src",
+			},
+			"/src": {
+				"/src/new.ts":    "new.ts",
+				"/src/shared.ts": "shared.ts",
+			},
+		},
+	}
+	fsys := layer.Mount(base)
+
+	content, ok := fsys.ReadFile("/src/shared.ts")
+	assert.Assert(t, ok)
+	assert.Equal(t, content, "overlay")
+	content, ok = fsys.ReadFile("/src/new.ts")
+	assert.Assert(t, ok)
+	assert.Equal(t, content, "new")
+	assert.DeepEqual(t, fsys.GetAccessibleEntries("/src").Files, []string{"disk.ts", "new.ts", "shared.ts"})
+
+	var walked []string
+	err := fsys.WalkDir("/", func(path string, _ vfs.DirEntry, err error) error {
+		assert.NilError(t, err)
+		walked = append(walked, path)
+		return nil
+	})
+	assert.NilError(t, err)
+	assert.DeepEqual(t, walked, []string{"/", "/src", "/src/disk.ts", "/src/new.ts", "/src/shared.ts"})
+
+	t.Run("blocks fallback on type conflicts", func(t *testing.T) {
+		t.Parallel()
+
+		conflictBase := vfstest.FromMap(map[string]string{
+			"/base-file":        "base",
+			"/base-directory/x": "base",
+		}, true)
+		conflictLayer := &snapshotOverlayLayer{
+			toPath: func(path string) tspath.Path { return tspath.Path(path) },
+			overlays: map[tspath.Path]*Overlay{
+				"/base-directory": newOverlay("/base-directory", "overlay", 1, core.ScriptKindTS),
+				"/base-file/x":    newOverlay("/base-file/x", "overlay", 1, core.ScriptKindTS),
+			},
+			overlayDirectories: map[tspath.Path]map[tspath.Path]string{
+				"/base-file": {
+					"/base-file/x": "x",
+				},
+			},
+		}
+		conflictFS := conflictLayer.Mount(conflictBase)
+
+		assert.Assert(t, conflictFS.FileExists("/base-directory"))
+		assert.Assert(t, !conflictFS.DirectoryExists("/base-directory"))
+		assert.DeepEqual(t, conflictFS.GetAccessibleEntries("/base-directory"), vfs.Entries{})
+		assert.Assert(t, !conflictFS.FileExists("/base-file"))
+		assert.Assert(t, conflictFS.DirectoryExists("/base-file"))
+		_, readOK := conflictFS.ReadFile("/base-file")
+		assert.Assert(t, !readOK)
+		assert.Assert(t, conflictFS.Stat("/base-file").IsDir())
+	})
+
+	t.Run("is immutable", func(t *testing.T) {
+		t.Parallel()
+
+		immutableFS := layer.Mount(base)
+		assert.ErrorIs(t, immutableFS.WriteFile("/src/shared.ts", "write"), vfs.ErrPermission)
+		assert.ErrorIs(t, immutableFS.AppendFile("/src/shared.ts", "append"), vfs.ErrPermission)
+		assert.ErrorIs(t, immutableFS.Remove("/src/shared.ts"), vfs.ErrPermission)
+		assert.ErrorIs(t, immutableFS.Chtimes("/src/shared.ts", time.Time{}, time.Time{}), vfs.ErrPermission)
+	})
+
+	t.Run("does not follow unaffected symlinks", func(t *testing.T) {
+		t.Parallel()
+
+		symlinkBase := vfstest.FromMap(map[string]any{
+			"/project/link":          vfstest.Symlink("/packages/pkg"),
+			"/project/overlay.ts":    "disk",
+			"/packages/pkg/index.ts": "target",
+			"/unaffected/link":       vfstest.Symlink("/packages/pkg"),
+			"/unaffected/sibling.ts": "sibling",
+		}, true)
+		symlinkLayer := &snapshotOverlayLayer{
+			toPath: func(path string) tspath.Path { return tspath.Path(path) },
+			overlays: map[tspath.Path]*Overlay{
+				"/project/overlay.ts": newOverlay("/project/overlay.ts", "overlay", 1, core.ScriptKindTS),
+			},
+			overlayDirectories: map[tspath.Path]map[tspath.Path]string{
+				"/": {
+					"/project": "project",
+				},
+				"/project": {
+					"/project/overlay.ts": "overlay.ts",
+				},
+			},
+		}
+		symlinkFS := symlinkLayer.Mount(symlinkBase)
+
+		type walkedEntry struct {
+			Path string
+			Kind fs.FileMode
+		}
+		walk := func(fsys vfs.FS, root string) []walkedEntry {
+			t.Helper()
+			var result []walkedEntry
+			walkErr := fsys.WalkDir(root, func(path string, entry vfs.DirEntry, entryErr error) error {
+				assert.NilError(t, entryErr)
+				result = append(result, walkedEntry{Path: path, Kind: entry.Type()})
+				return nil
+			})
+			assert.NilError(t, walkErr)
+			return result
+		}
+
+		assert.DeepEqual(t, walk(symlinkFS, "/project"), []walkedEntry{
+			{Path: "/project", Kind: fs.ModeDir},
+			{Path: "/project/link", Kind: fs.ModeSymlink},
+			{Path: "/project/overlay.ts"},
+		})
+		assert.DeepEqual(t, walk(symlinkFS, "/unaffected"), walk(symlinkBase, "/unaffected"))
+		assert.DeepEqual(t, walk(symlinkFS, "/unaffected/link"), walk(symlinkBase, "/unaffected/link"))
 	})
 }
 

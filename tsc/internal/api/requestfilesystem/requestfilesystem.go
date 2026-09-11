@@ -11,6 +11,7 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/project"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
+	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 )
 
 // Kind controls how a request filesystem is used.
@@ -61,10 +62,13 @@ type RequestFileSystem struct {
 type requestFileSystem struct {
 	kind                  Kind
 	base                  vfs.FS
+	host                  vfs.FS
 	currentDirectory      string
 	useCaseSensitiveNames bool
 	paths                 *requestPathNode
 }
+
+var _ layervfs.Layer = (*requestFileSystem)(nil)
 
 type resolvedRequestPath struct {
 	path            string
@@ -86,14 +90,31 @@ func getRequestFileSystem(fileSystem vfs.FS) *requestFileSystem {
 	return requestFileSystem
 }
 
+// NewLayer creates a request filesystem layer. The supplied base determines path
+// casing and is used for host-backed symlinks when the layer is mounted directly.
+func NewLayer(params *RequestFileSystem, base vfs.FS, currentDirectory string) (layervfs.Layer, error) {
+	return newRequestFileSystemWorker(params, base, currentDirectory)
+}
+
 // NewForUpdate creates a request filesystem for a snapshot update. Layers over
 // request filesystems are compacted eagerly so the result does not retain its
 // base snapshot's filesystem.
 func NewForUpdate(params *RequestFileSystem, base vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (vfs.FS, error) {
+	fileSystem, _, err := NewLayerForUpdate(params, base, currentDirectory, fileChanges)
+	return fileSystem, err
+}
+
+// NewLayerForUpdate creates both the compacted filesystem used for subsequent
+// updates and the uncomposed layer represented by this update.
+func NewLayerForUpdate(params *RequestFileSystem, base vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (vfs.FS, layervfs.Layer, error) {
 	if params == nil {
-		return base, nil
+		return base, nil, nil
 	}
 	baseFileSystem := base
+	hostFileSystem := base
+	if requestBase := getRequestFileSystem(base); requestBase != nil {
+		hostFileSystem = requestBase.host
+	}
 	if params.Kind == KindFull {
 		if requestBase := getRequestFileSystem(base); requestBase != nil {
 			baseFileSystem = requestBase.base
@@ -102,16 +123,17 @@ func NewForUpdate(params *RequestFileSystem, base vfs.FS, currentDirectory strin
 	if params.Kind == KindLayer {
 		addFileChanges(fileChanges, params, baseFileSystem, currentDirectory)
 	}
-	fileSystem, err := newRequestFileSystemWorker(params, baseFileSystem, currentDirectory)
+	layer, err := NewLayer(params, hostFileSystem, currentDirectory)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	fileSystem := layer.(*requestFileSystem)
 	baseRequestFileSystem := getRequestFileSystem(baseFileSystem)
 	if baseRequestFileSystem != nil {
 		compacted := fileSystem.applyTo(*baseRequestFileSystem)
-		return &compacted, nil
+		return layervfs.New(compacted.base, &compacted), layer, nil
 	}
-	return fileSystem, nil
+	return layervfs.New(baseFileSystem, fileSystem), layer, nil
 }
 
 // HasFullFileSystem reports whether fileSystem contains a complete request filesystem.
@@ -128,6 +150,7 @@ func newRequestFileSystemWorker(params *RequestFileSystem, base vfs.FS, currentD
 	result := requestFileSystem{
 		kind:                  params.Kind,
 		base:                  base,
+		host:                  base,
 		currentDirectory:      currentDirectory,
 		useCaseSensitiveNames: base.UseCaseSensitiveFileNames(),
 		paths:                 &requestPathNode{},
@@ -203,10 +226,29 @@ func (s requestFileSystem) baseFileSystem() vfs.FS {
 	return s.base
 }
 
+func (s *requestFileSystem) Mount(base vfs.FS) vfs.FS {
+	mounted := *s
+	mounted.base = base
+	return &mounted
+}
+
+func (s *requestFileSystem) Shadows(path string) bool {
+	if s.kind == KindFull {
+		return true
+	}
+	lookup := s.lookupPath(path)
+	return !lookup.ok || lookup.info != nil || lookup.followedSymlink
+}
+
+func (s *requestFileSystem) Full() bool {
+	return s.kind == KindFull
+}
+
 func (s requestFileSystem) applyTo(base requestFileSystem) requestFileSystem {
 	s.paths = composeRequestPaths(base.paths, s.paths, requestFallbackAllowed, s.useCaseSensitiveNames)
 	s.kind = base.kind
 	s.base = base.base
+	s.host = base.host
 	return s
 }
 
@@ -359,7 +401,11 @@ func (s requestFileSystem) lookupPath(path string) requestPathLookup {
 		if resolvedFallback == requestFallbackMissing {
 			return requestPathLookup{}
 		}
-		result.fileSystem = s.base
+		if resolved.host {
+			result.fileSystem = s.host
+		} else {
+			result.fileSystem = s.base
+		}
 		result.ok = result.fileSystem != nil
 	}
 	return result

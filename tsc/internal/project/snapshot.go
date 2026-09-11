@@ -24,6 +24,7 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/sourcemap"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
+	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/vfsmatch"
 )
 
@@ -51,9 +52,6 @@ type Snapshot struct {
 
 	builderLogs *logging.LogTree
 	apiError    error
-	// fileSystemOverride indicates that this snapshot was built from a filesystem
-	// supplied by an API update rather than the session host filesystem.
-	fileSystemOverride bool
 }
 
 func (s *Snapshot) contentMapperWatchState() ([]string, *collections.Set[tspath.Path]) {
@@ -245,7 +243,6 @@ func (s *Snapshot) cloneForProgram(
 
 func (s *Snapshot) cloneWithTemporaryFile(
 	ctx context.Context,
-	fileSystem vfs.FS,
 	uri lsproto.DocumentUri,
 	newText string,
 ) (*Snapshot, error) {
@@ -268,14 +265,8 @@ func (s *Snapshot) cloneWithTemporaryFile(
 		fileChanges.Opened = uri
 	}
 	overlays[path] = newOverlay(uri.FileName(), newText, version, scriptKind)
-	if fileSystem == nil {
-		fileSystem = s.fs.fs
-	}
-
 	return s.Clone(ctx, SnapshotChange{
-		fs:                 fileSystem,
-		fileSystemOverride: s.fileSystemOverride,
-		fileChanges:        fileChanges,
+		fileChanges: fileChanges,
 		ResourceRequest: ResourceRequest{
 			Documents: []lsproto.DocumentUri{uri},
 		},
@@ -391,12 +382,6 @@ func (s *Snapshot) FileSystem() vfs.FS {
 	return s.fs.fs
 }
 
-// HasFileSystemOverride reports whether this snapshot uses an API-supplied
-// filesystem instead of the session host filesystem.
-func (s *Snapshot) HasFileSystemOverride() bool {
-	return s.fileSystemOverride
-}
-
 func (s *Snapshot) ReadFile(fileName string) (string, bool) {
 	handle := s.GetFile(fileName)
 	if handle == nil {
@@ -426,10 +411,21 @@ type APISnapshotRequest struct {
 	CloseProjects *collections.Set[tspath.Path]
 	OpenFiles     *collections.Set[lsproto.DocumentUri]
 	CloseFiles    *collections.Set[tspath.Path]
-	FileSystem    vfs.FS
-	// ReplaceFileSystem indicates a total filesystem replacement. Layers use
-	// per-path file changes instead of invalidating all inherited state.
-	ReplaceFileSystem bool
+	FileSystem    *FileSystemChange
+}
+
+// FileSystemChange selects a new filesystem base, adds a layer, or does both.
+// A nil change inherits the base snapshot's filesystem.
+type FileSystemChange struct {
+	base  vfs.FS
+	layer layervfs.Layer
+}
+
+func NewFileSystemChange(base vfs.FS, layer layervfs.Layer) *FileSystemChange {
+	if base == nil && layer == nil {
+		return nil
+	}
+	return &FileSystemChange{base: base, layer: layer}
 }
 
 type ProjectTreeRequest struct {
@@ -474,12 +470,8 @@ type ResourceRequest struct {
 
 type SnapshotChange struct {
 	ResourceRequest
-	reason UpdateReason
-	// fs overrides the session filesystem for this snapshot. It is used by API
-	// snapshots that supply their own memory or cache filesystem.
-	fs                 vfs.FS
-	fileSystemOverride bool
-	replaceFileSystem  bool
+	reason     UpdateReason
+	fileSystem *FileSystemChange
 	// fileChanges are the changes that have occurred since the last snapshot.
 	fileChanges FileChangeSummary
 	// compilerOptionsForInferredProjects is the compiler options to use for inferred projects.
@@ -514,11 +506,11 @@ func (s *Snapshot) Clone(
 	overlays map[tspath.Path]*Overlay,
 	sessionLogger logging.Logger,
 ) *Snapshot {
-	store := s.host
+	host := s.host
 	var logger *logging.LogTree
 
 	// Print in-progress logs immediately if cloning fails
-	if store.options.LoggingEnabled && sessionLogger != nil {
+	if host.options.LoggingEnabled && sessionLogger != nil {
 		defer func() {
 			if r := recover(); r != nil {
 				sessionLogger.Log(logger.String())
@@ -527,7 +519,7 @@ func (s *Snapshot) Clone(
 		}()
 	}
 
-	if store.options.LoggingEnabled && sessionLogger != nil {
+	if host.options.LoggingEnabled && sessionLogger != nil {
 		logger = logging.NewLogTree(fmt.Sprintf("Cloning snapshot %d", s.id))
 		getDetails := func() string {
 			details := ""
@@ -578,17 +570,22 @@ func (s *Snapshot) Clone(
 		inferredContentMappers = change.contentMapperContributions.Mappers
 		inferredContentMapperExtensions = change.contentMapperContributions.Extensions
 	}
-	baseFS := store.fs
-	if change.fs != nil {
-		baseFS = change.fs
+	baseFS := s.fs.baseFS
+	if baseFS == nil {
+		baseFS = host.fs
 	}
-	// Total replacements and returning to the session host must not retain files
-	// from the previous filesystem. Layers invalidate only their per-path changes,
-	// including the first layer over a host-backed snapshot.
-	if change.replaceFileSystem || s.fileSystemOverride && !change.fileSystemOverride {
-		change.fileChanges.InvalidateAll = true
+	var fileSystemLayer layervfs.Layer
+	if change.fileSystem != nil {
+		if change.fileSystem.base != nil {
+			baseFS = change.fileSystem.base
+			change.fileChanges.InvalidateAll = true
+		}
+		fileSystemLayer = change.fileSystem.layer
+		if fileSystemLayer != nil && fileSystemLayer.Full() {
+			change.fileChanges.InvalidateAll = true
+		}
 	}
-	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, store.options.PositionEncoding, store.toPath)
+	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, host.options.PositionEncoding, host.toPath, fileSystemLayer)
 	change.fileChanges = s.processFileChanges(fs, change.fileChanges, logger, change.contentMapperContributions)
 
 	compilerOptionsForInferredProjects := s.compilerOptionsForInferredProjects
@@ -602,7 +599,7 @@ func (s *Snapshot) Clone(
 		customConfigFileName = change.newConfig.CustomConfigFileName
 	}
 
-	newSnapshotID := store.nextSnapshotID()
+	newSnapshotID := host.nextSnapshotID()
 	projectCollectionBuilder := newProjectCollectionBuilder(
 		ctx,
 		newSnapshotID,
@@ -613,12 +610,12 @@ func (s *Snapshot) Clone(
 		compilerOptionsForInferredProjects,
 		inferredContentMappers,
 		inferredContentMapperExtensions,
-		store.options,
+		host.options,
 		customConfigFileName,
-		store.parseCache,
-		store.contentMappedParseCache,
-		store.extendedConfigCache,
-		store.contentMapperHost,
+		host.parseCache,
+		host.contentMappedParseCache,
+		host.extendedConfigCache,
+		host.contentMapperHost,
 		change.client,
 	)
 
@@ -714,10 +711,10 @@ func (s *Snapshot) Clone(
 
 	autoImportHost := newAutoImportRegistryCloneHost(
 		projectCollection,
-		store.parseCache,
+		host.parseCache,
 		fs,
-		store.options.CurrentDirectory,
-		store.toPath,
+		host.options.CurrentDirectory,
+		host.toPath,
 	)
 	openFiles := make(map[tspath.Path]string, len(overlays))
 	for path, overlay := range overlays {
@@ -729,7 +726,7 @@ func (s *Snapshot) Clone(
 	}
 	oldAutoImports := s.AutoImports
 	if oldAutoImports == nil {
-		oldAutoImports = autoimport.NewRegistry(store.toPath, s.userPreferences)
+		oldAutoImports = autoimport.NewRegistry(host.toPath, s.userPreferences)
 	}
 	var autoImportsWatch *WatchedFiles[map[tspath.Path]string]
 	autoImports, err := oldAutoImports.Clone(ctx, autoimport.RegistryChange{
@@ -746,7 +743,7 @@ func (s *Snapshot) Clone(
 	}
 
 	snapshotFS, _ := fs.Finalize()
-	newSnapshot := store.newSnapshot(
+	newSnapshot := host.newSnapshot(
 		newSnapshotID,
 		snapshotFS,
 		nil,
@@ -762,11 +759,9 @@ func (s *Snapshot) Clone(
 	newSnapshot.inferredProjectContentMapperExtensions = inferredContentMapperExtensions
 	newSnapshot.builderLogs = logger
 	newSnapshot.apiError = apiError
-	newSnapshot.fileSystemOverride = change.fileSystemOverride
-
 	for _, project := range newSnapshot.ProjectCollection.Projects() {
 		if project.Program != nil {
-			store.programCounter.Ref(project.Program)
+			host.programCounter.Ref(project.Program)
 			if project.ProgramLastUpdate == newSnapshotID {
 				// If the program was updated during this clone, the project and its host are new
 				// and still retain references to the builder. Freezing clears the builder reference
@@ -787,7 +782,7 @@ func (s *Snapshot) Clone(
 	for _, config := range newSnapshot.ConfigFileRegistry.configs {
 		if config.commandLine != nil && config.commandLine.ConfigFile != nil {
 			for _, file := range config.commandLine.ConfigFile.ExtendedSourceFiles {
-				store.extendedConfigCache.AddOwner(store.toPath(file), newSnapshot.id)
+				host.extendedConfigCache.AddOwner(host.toPath(file), newSnapshot.id)
 			}
 		}
 	}

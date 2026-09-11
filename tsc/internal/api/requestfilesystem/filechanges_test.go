@@ -38,6 +38,23 @@ func TestFileChangesIncludeDirectoryTombstones(t *testing.T) {
 	assert.Assert(t, summary.Changed.Has("file:///replaced.ts"))
 }
 
+func TestFileChangesIncludeDirectoryReplacedByFile(t *testing.T) {
+	t.Parallel()
+
+	base := vfstest.FromMap(map[string]string{
+		"/replaced/child.ts": "old",
+	}, true)
+	var summary project.FileChangeSummary
+	addFileChanges(&summary, &RequestFileSystem{
+		Kind:  KindLayer,
+		Files: map[string]string{"/replaced": "new"},
+	}, base, "/")
+
+	assert.Assert(t, summary.Deleted.Has("file:///replaced"))
+	assert.Assert(t, summary.Created.Has("file:///replaced"))
+	assert.Assert(t, !summary.Changed.Has("file:///replaced"))
+}
+
 func TestFileChangesIncludeListingsAndSymlinks(t *testing.T) {
 	t.Parallel()
 

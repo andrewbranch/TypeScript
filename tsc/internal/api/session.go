@@ -36,6 +36,7 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/tsoptions"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
+	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 )
 
 var sessionIDCounter atomic.Uint64
@@ -1204,12 +1205,21 @@ func (s *Session) handleUpdateSnapshot(ctx context.Context, params *UpdateSnapsh
 	}
 	sd := newSnapshotData()
 	var err error
-	sd.fileSystem, err = requestfilesystem.NewForUpdate(params.FileSystem, baseRequestFileSystem, s.currentDirectory(), &fileChanges)
+	var fileSystemLayer layervfs.Layer
+	sd.fileSystem, fileSystemLayer, err = requestfilesystem.NewLayerForUpdate(params.FileSystem, baseRequestFileSystem, s.currentDirectory(), &fileChanges)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrClientError, err)
 	}
-	apiRequest.FileSystem = sd.fileSystem
-	apiRequest.ReplaceFileSystem = params.FileSystem != nil && params.FileSystem.Kind == requestfilesystem.KindFull
+	var fileSystemBase vfs.FS
+	if baseSD == nil {
+		s.snapshotsMu.RLock()
+		latestSnapshotData := s.snapshots[s.latestSnapshot]
+		s.snapshotsMu.RUnlock()
+		if latestSnapshotData != nil && latestSnapshotData.fileSystem != nil {
+			fileSystemBase = s.fileSystem()
+		}
+	}
+	apiRequest.FileSystem = project.NewFileSystemChange(fileSystemBase, fileSystemLayer)
 
 	// Open projects: only take a new ref for projects we aren't already holding open.
 	var openedProjects []tspath.Path
@@ -1336,7 +1346,7 @@ func (s *Session) handleUpdateTemporarySnapshot(ctx context.Context, params *Upd
 	sd := newSnapshotData()
 	sd.fileSystem = baseSD.fileSystem
 
-	snapshot, err := s.snapshotHost.CloneSnapshotWithTemporaryFile(ctx, baseSD.snapshot, sd.fileSystem, uri, params.NewText)
+	snapshot, err := s.snapshotHost.CloneSnapshotWithTemporaryFile(ctx, baseSD.snapshot, uri, params.NewText)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to update temporary snapshot: %w", ErrClientError, err)
 	}
