@@ -415,18 +415,21 @@ type APISnapshotRequest struct {
 	CloseProjects *collections.Set[tspath.Path]
 	OpenFiles     *collections.Set[lsproto.DocumentUri]
 	CloseFiles    *collections.Set[tspath.Path]
-	FileSystem    *FileSystemChange
+	FileSystem    FileSystemChange
 }
 
-// FileSystemChange selects a new filesystem base, adds a layer, or does both.
-// A nil change inherits the base snapshot's filesystem.
+type FileSystemChangeKind int
+
+const (
+	FileSystemChangeKindAdd FileSystemChangeKind = iota
+	FileSystemChangeKindRemove
+)
+
+// FileSystemChange replaces or removes the snapshot's top filesystem layer.
+// Adding a nil layer inherits the base snapshot's layer.
 type FileSystemChange struct {
-	baseLayer layervfs.Layer
-	layer     layervfs.Layer
-}
-
-func NewFileSystemChange(baseLayer layervfs.Layer, layer layervfs.Layer) *FileSystemChange {
-	return &FileSystemChange{baseLayer: baseLayer, layer: layer}
+	Kind  FileSystemChangeKind
+	Layer layervfs.Layer
 }
 
 type ProjectTreeRequest struct {
@@ -471,8 +474,7 @@ type ResourceRequest struct {
 
 type SnapshotChange struct {
 	ResourceRequest
-	reason     UpdateReason
-	fileSystem *FileSystemChange
+	reason UpdateReason
 	// fileChanges are the changes that have occurred since the last snapshot.
 	fileChanges FileChangeSummary
 	// compilerOptionsForInferredProjects is the compiler options to use for inferred projects.
@@ -576,11 +578,16 @@ func (s *Snapshot) Clone(
 		baseFS = host.fs
 	}
 	fileSystemLayer := s.fs.topLayer
-	if change.fileSystem != nil {
-		if change.fileSystem.baseLayer == nil && s.fs.topLayer != nil {
-			change.fileChanges.InvalidateAll = true
+	if change.apiRequest != nil {
+		fileSystemChange := &change.apiRequest.FileSystem
+		if fileSystemChange.Kind == FileSystemChangeKindRemove {
+			if fileSystemChange.Layer != nil {
+				panic("FileSystemChange cannot set and remove a layer")
+			}
+			fileSystemLayer = nil
+		} else if fileSystemChange.Layer != nil {
+			fileSystemLayer = fileSystemChange.Layer
 		}
-		fileSystemLayer = change.fileSystem.layer
 	}
 	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, host.options.PositionEncoding, host.toPath, fileSystemLayer)
 	change.fileChanges = s.processFileChanges(fs, change.fileChanges, logger, change.contentMapperContributions)

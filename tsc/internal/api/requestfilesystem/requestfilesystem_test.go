@@ -27,7 +27,7 @@ func newLayeredRequestFileSystem(params *RequestFileSystem, base vfs.FS, current
 		baseLayer = requestBase
 		host = requestBase.host
 	}
-	fileSystem, err := NewForUpdate(params, baseLayer, host, currentDirectory, &fileChanges)
+	fileSystem, err := NewForUpdate(params, baseLayer, baseLayer == nil, host, currentDirectory, &fileChanges)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +113,13 @@ func TestInitializeForUpdate(t *testing.T) {
 		base, err := NewForUpdate(&RequestFileSystem{
 			Kind:  KindFull,
 			Files: map[string]string{"/base.ts": "base"},
-		}, nil, host, "/", &fileChanges)
+		}, nil, true, host, "/", &fileChanges)
 		assert.NilError(t, err)
 
 		layered, err := NewForUpdate(&RequestFileSystem{
 			Kind:  KindLayer,
 			Files: map[string]string{"/layered.ts": "layered"},
-		}, base, host, "/", &fileChanges)
+		}, base, false, host, "/", &fileChanges)
 		assert.NilError(t, err)
 		requestFileSystem, ok := layered.(*requestFileSystem)
 		assert.Assert(t, ok)
@@ -141,7 +141,7 @@ func TestInitializeForUpdate(t *testing.T) {
 			Directories: map[string]RequestDirectoryEntries{
 				"/dir": {Files: []string{"cached.ts"}, Directories: []string{}},
 			},
-		}, nil, host, "/", &fileChanges)
+		}, nil, true, host, "/", &fileChanges)
 		assert.NilError(t, err)
 		mounted := fileSystem.Mount(host)
 		// Change generation may inspect the old directory; reading the supplied
@@ -166,7 +166,7 @@ func TestInitializeForUpdate(t *testing.T) {
 		fileSystem, err := NewForUpdate(&RequestFileSystem{
 			Kind:  KindFull,
 			Files: map[string]string{"/replacement.ts": "replacement"},
-		}, base, host, "/", &fileChanges)
+		}, base, false, host, "/", &fileChanges)
 		assert.NilError(t, err)
 		requestFileSystem, ok := fileSystem.(*requestFileSystem)
 		assert.Assert(t, ok)

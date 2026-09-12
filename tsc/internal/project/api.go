@@ -16,14 +16,9 @@ func (s *Session) APIUpdate(ctx context.Context, apiFileChanges FileChangeSummar
 
 	fileChanges, overlays, ataChanges, _ := s.flushChanges(ctx)
 	mergeFileChangeSummary(&fileChanges, apiFileChanges)
-	var fileSystem *FileSystemChange
-	if apiRequest != nil {
-		fileSystem = apiRequest.FileSystem
-	}
 
 	newSnapshot := s.updateSnapshotRef(ctx, overlays, SnapshotChange{
 		apiRequest:  apiRequest,
-		fileSystem:  fileSystem,
 		fileChanges: fileChanges,
 		ataChanges:  ataChanges,
 	})

@@ -93,7 +93,17 @@ func getRequestFileSystem(fileSystem vfs.FS) *requestFileSystem {
 }
 
 // NewForUpdate creates the compacted request layer for a snapshot update.
-func NewForUpdate(params *RequestFileSystem, base layervfs.Layer, host vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (layervfs.Layer, error) {
+// startsFromHost means the caller intentionally did not inherit a request layer
+// from a base snapshot. The current snapshot may still contain an unrelated
+// request layer, so restarting from the host conservatively invalidates its
+// cached state. A nil base alone does not imply this: an explicitly selected
+// host-backed snapshot also has no request layer. This distinction is a
+// compatibility workaround for the legacy updateSnapshot API and should be
+// removed with the snapshot state redesign in #64154.
+func NewForUpdate(params *RequestFileSystem, base layervfs.Layer, startsFromHost bool, host vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (layervfs.Layer, error) {
+	if startsFromHost {
+		fileChanges.InvalidateAll = true
+	}
 	if params == nil {
 		return base, nil
 	}

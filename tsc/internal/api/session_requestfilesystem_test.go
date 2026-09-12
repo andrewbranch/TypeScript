@@ -422,7 +422,7 @@ func TestSnapshotFileSystemLayerWithoutBaseUpdatesHostState(t *testing.T) {
 	snapshot := session.snapshots[updated.Snapshot].snapshot
 	updatedProject := snapshot.ProjectCollection.GetProjectByPath("/tsconfig.json")
 	assert.Equal(t, updatedProject.GetProgram().GetSourceFile("/index.ts").Text(), updatedText)
-	assert.Equal(t, updatedProject.ProgramUpdateKind, project.ProgramUpdateKindCloned)
+	assert.Equal(t, updatedProject.ProgramUpdateKind, project.ProgramUpdateKindSameFileNames)
 }
 
 func TestEmitFromLayerOverFullFileSystemReturnsFileContents(t *testing.T) {

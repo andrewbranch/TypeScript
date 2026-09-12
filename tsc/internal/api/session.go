@@ -1201,11 +1201,18 @@ func (s *Session) handleUpdateSnapshot(ctx context.Context, params *UpdateSnapsh
 	}
 	sd := newSnapshotData()
 	var err error
-	fileSystemLayer, err := requestfilesystem.NewForUpdate(params.FileSystem, baseFileSystemLayer, s.fileSystem(), s.currentDirectory(), &fileChanges)
+	// The legacy updateSnapshot API restarts from the host when no base snapshot
+	// handle is supplied, rather than inheriting the canonical snapshot's layer.
+	// This workaround is removed by the snapshot state redesign in #64154.
+	fileSystemLayer, err := requestfilesystem.NewForUpdate(params.FileSystem, baseFileSystemLayer, baseSD == nil, s.fileSystem(), s.currentDirectory(), &fileChanges)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrClientError, err)
 	}
-	apiRequest.FileSystem = project.NewFileSystemChange(baseFileSystemLayer, fileSystemLayer)
+	if fileSystemLayer == nil {
+		apiRequest.FileSystem = project.FileSystemChange{Kind: project.FileSystemChangeKindRemove}
+	} else {
+		apiRequest.FileSystem = project.FileSystemChange{Kind: project.FileSystemChangeKindAdd, Layer: fileSystemLayer}
+	}
 
 	// Open projects: only take a new ref for projects we aren't already holding open.
 	var openedProjects []tspath.Path
