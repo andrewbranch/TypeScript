@@ -579,14 +579,13 @@ func (s *Snapshot) Clone(
 	}
 	fileSystemLayer := s.fs.topLayer
 	if change.apiRequest != nil {
-		fileSystemChange := &change.apiRequest.FileSystem
-		if fileSystemChange.Kind == FileSystemChangeKindRemove {
-			if fileSystemChange.Layer != nil {
+		if change.apiRequest.FileSystem.Kind == FileSystemChangeKindRemove {
+			if change.apiRequest.FileSystem.Layer != nil {
 				panic("FileSystemChange cannot set and remove a layer")
 			}
 			fileSystemLayer = nil
-		} else if fileSystemChange.Layer != nil {
-			fileSystemLayer = fileSystemChange.Layer
+		} else if change.apiRequest.FileSystem.Layer != nil {
+			fileSystemLayer = change.apiRequest.FileSystem.Layer
 		}
 	}
 	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, host.options.PositionEncoding, host.toPath, fileSystemLayer)
