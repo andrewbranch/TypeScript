@@ -34,11 +34,21 @@ func addFileChanges(summary *project.FileChangeSummary, request *RequestFileSyst
 			}
 		}
 	}
+	addRequestDescendants := func(fileName string) {
+		if baseRequestFS == nil {
+			return
+		}
+		node, _ := baseRequestFS.paths.lookup(baseRequestFS.toPath(fileName))
+		node.walkFiles(func(file *requestFile) {
+			addChangeAndAliases(file.fileName, true)
+		})
+	}
 	// Replacing a path's type, a listing, or a symlink can change every cached
 	// descendant. Delete events expand through the snapshot's cached directory
 	// tree and create events refresh wildcard roots and missing resolutions.
 	addReplacement := func(path string) {
 		absolutePath := tspath.GetNormalizedAbsolutePath(path, currentDirectory)
+		addRequestDescendants(absolutePath)
 		addChangeAndAliases(absolutePath, true)
 		summary.Created.Add(lsconv.FileNameToDocumentURI(absolutePath))
 		if baseRequestFS != nil {
@@ -48,11 +58,13 @@ func addFileChanges(summary *project.FileChangeSummary, request *RequestFileSyst
 		}
 	}
 	overlayFiles := make(map[tspath.Path]struct{}, len(request.Files))
-	for fileName := range request.Files {
+	for fileName, content := range request.Files {
 		absoluteFileName := tspath.GetNormalizedAbsolutePath(fileName, currentDirectory)
 		overlayFiles[toPath(absoluteFileName)] = struct{}{}
 		if baseFS.DirectoryExists(absoluteFileName) {
 			addReplacement(absoluteFileName)
+		} else if baseContent, ok := baseFS.ReadFile(absoluteFileName); ok && baseContent == content {
+			continue
 		} else {
 			addChangeAndAliases(absoluteFileName, false)
 		}
@@ -62,6 +74,7 @@ func addFileChanges(summary *project.FileChangeSummary, request *RequestFileSyst
 		if _, replaced := overlayFiles[toPath(absoluteFileName)]; replaced {
 			continue
 		}
+		addRequestDescendants(absoluteFileName)
 		addChangeAndAliases(absoluteFileName, true)
 	}
 	for directoryName := range request.Directories {

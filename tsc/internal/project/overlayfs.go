@@ -86,6 +86,11 @@ func newDiskFile(fileName string, content string) *diskFile {
 	}
 }
 
+// NewFileHandle creates an immutable non-overlay file handle.
+func NewFileHandle(fileName string, content string) FileHandle {
+	return newDiskFile(fileName, content)
+}
+
 var _ FileHandle = (*diskFile)(nil)
 
 func (f *diskFile) Version() int32 {

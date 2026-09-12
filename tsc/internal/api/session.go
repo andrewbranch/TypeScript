@@ -36,7 +36,6 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/tsoptions"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
-	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 )
 
 var sessionIDCounter atomic.Uint64
@@ -1195,7 +1194,7 @@ func (s *Session) handleUpdateSnapshot(ctx context.Context, params *UpdateSnapsh
 	fileChanges := s.toFileChangeSummary(params.FileChanges)
 
 	apiRequest := &project.APISnapshotRequest{}
-	var baseFileSystemLayer layervfs.Layer
+	var baseFileSystemLayer project.FileSourceLayer
 	if baseSD != nil {
 		baseFileSystemLayer = baseSD.snapshot.FileSystemLayer()
 	}

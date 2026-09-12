@@ -21,7 +21,7 @@ var _ FileSource = (*autoImportBuilderFS)(nil)
 
 // FS implements FileSource.
 func (a *autoImportBuilderFS) FS() vfs.FS {
-	return a.snapshotFSBuilder.fs
+	return a.snapshotFSBuilder.FS()
 }
 
 // GetFile implements FileSource.
@@ -37,6 +37,9 @@ func (a *autoImportBuilderFS) GetFileByPath(fileName string, path tspath.Path) F
 	// diskFiles. (Note the reason we can't just use the finalized SnapshotFS is that changed
 	// files not read during other parts of the snapshot clone will be marked as dirty, but
 	// not yet refreshed from disk.)
+	if a.snapshotFSBuilder.topLayer != nil && a.snapshotFSBuilder.topLayer.Shadows(fileName) {
+		return a.snapshotFSBuilder.topSource.GetFileByPath(fileName, path)
+	}
 	if overlay, ok := a.snapshotFSBuilder.overlays[path]; ok {
 		return overlay
 	}
@@ -47,7 +50,7 @@ func (a *autoImportBuilderFS) GetFileByPath(fileName string, path tspath.Path) F
 		return fh
 	}
 	var fh FileHandle
-	content, ok := a.snapshotFSBuilder.fs.ReadFile(fileName)
+	content, ok := a.snapshotFSBuilder.readDiskFile(fileName)
 	if ok {
 		fh = newDiskFile(fileName, content)
 	}

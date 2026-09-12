@@ -31,9 +31,11 @@ func TestFileChangesIncludeDirectoryTombstones(t *testing.T) {
 	}, base, "/")
 	assert.Assert(t, !summary.InvalidateAll)
 	assert.Assert(t, summary.IncludesWatchChangeOutsideNodeModules)
-	assert.Equal(t, summary.Deleted.Len(), 2)
+	assert.Equal(t, summary.Deleted.Len(), 4)
 	assert.Assert(t, summary.Deleted.Has("file:///removed"))
 	assert.Assert(t, summary.Deleted.Has("file:///alias"))
+	assert.Assert(t, summary.Deleted.Has("file:///removed/nested/file.ts"))
+	assert.Assert(t, summary.Deleted.Has("file:///alias/nested/file.ts"))
 	assert.Equal(t, summary.Changed.Len(), 1)
 	assert.Assert(t, summary.Changed.Has("file:///replaced.ts"))
 }

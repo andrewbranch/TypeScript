@@ -9,7 +9,6 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/project"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
-	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/trackingvfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/vfstest"
 	"gotest.tools/v3/assert"
@@ -21,7 +20,7 @@ func newRequestFileSystem(params *RequestFileSystem, base vfs.FS, currentDirecto
 
 func newLayeredRequestFileSystem(params *RequestFileSystem, base vfs.FS, currentDirectory string) (*requestFileSystem, error) {
 	var fileChanges project.FileChangeSummary
-	var baseLayer layervfs.Layer
+	var baseLayer project.FileSourceLayer
 	host := base
 	if requestBase := getRequestFileSystem(base); requestBase != nil {
 		baseLayer = requestBase
@@ -143,7 +142,9 @@ func TestInitializeForUpdate(t *testing.T) {
 			},
 		}, nil, true, host, "/", &fileChanges)
 		assert.NilError(t, err)
-		mounted := fileSystem.Mount(host)
+		requestFileSystem, ok := fileSystem.(*requestFileSystem)
+		assert.Assert(t, ok)
+		mounted := requestFileSystem.mountFS(host)
 		// Change generation may inspect the old directory; reading the supplied
 		// complete listing itself must not fall back to the host.
 		host.SeenFiles.Delete("/dir")

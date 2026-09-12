@@ -24,7 +24,6 @@ import (
 	"github.com/microsoft/TypeScript/tsc/internal/sourcemap"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
-	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs/vfsmatch"
 )
 
@@ -128,11 +127,7 @@ func (s *Snapshot) cloneForProgram(
 	}
 
 	start := time.Now()
-	baseFS := s.fs.baseFS
-	if baseFS == nil {
-		baseFS = store.fs
-	}
-	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, s.fs.overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, store.options.PositionEncoding, store.toPath, s.fs.topLayer)
+	fs := newSnapshotFSBuilder(store.fs, s.fs.overlays, s.fs.overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, store.options.PositionEncoding, store.toPath, s.fs.topLayer)
 	fileChanges = s.processFileChanges(fs, fileChanges, logger, nil)
 
 	newSnapshotID := store.nextSnapshotID()
@@ -374,15 +369,15 @@ func (s *Snapshot) toPath(fileName string) tspath.Path {
 }
 
 func (s *Snapshot) UseCaseSensitiveFileNames() bool {
-	return s.fs.fs.UseCaseSensitiveFileNames()
+	return s.fs.FS().UseCaseSensitiveFileNames()
 }
 
 // FileSystem returns the filesystem backing this snapshot.
 func (s *Snapshot) FileSystem() vfs.FS {
-	return s.fs.fs
+	return s.fs.FS()
 }
 
-func (s *Snapshot) FileSystemLayer() layervfs.Layer {
+func (s *Snapshot) FileSystemLayer() FileSourceLayer {
 	return s.fs.topLayer
 }
 
@@ -395,19 +390,19 @@ func (s *Snapshot) ReadFile(fileName string) (string, bool) {
 }
 
 func (s *Snapshot) DirectoryExists(path string) bool {
-	return s.fs.fs.DirectoryExists(path)
+	return s.fs.FS().DirectoryExists(path)
 }
 
 func (s *Snapshot) FileExists(path string) bool {
-	return s.fs.fs.FileExists(path)
+	return s.fs.FS().FileExists(path)
 }
 
 func (s *Snapshot) GetDirectories(path string) []string {
-	return s.fs.fs.GetAccessibleEntries(path).Directories
+	return s.fs.FS().GetAccessibleEntries(path).Directories
 }
 
 func (s *Snapshot) ReadDirectory(currentDir string, path string, extensions []string, excludes []string, includes []string, depth int) []string {
-	return vfsmatch.ReadDirectory(s.fs.fs, currentDir, path, extensions, excludes, includes, depth)
+	return vfsmatch.ReadDirectory(s.fs.FS(), currentDir, path, extensions, excludes, includes, depth)
 }
 
 type APISnapshotRequest struct {
@@ -429,7 +424,7 @@ const (
 // Adding a nil layer inherits the base snapshot's layer.
 type FileSystemChange struct {
 	Kind  FileSystemChangeKind
-	Layer layervfs.Layer
+	Layer FileSourceLayer
 }
 
 type ProjectTreeRequest struct {
@@ -573,10 +568,6 @@ func (s *Snapshot) Clone(
 		inferredContentMappers = change.contentMapperContributions.Mappers
 		inferredContentMapperExtensions = change.contentMapperContributions.Extensions
 	}
-	baseFS := s.fs.baseFS
-	if baseFS == nil {
-		baseFS = host.fs
-	}
 	fileSystemLayer := s.fs.topLayer
 	if change.apiRequest != nil {
 		if change.apiRequest.FileSystem.Kind == FileSystemChangeKindRemove {
@@ -588,7 +579,7 @@ func (s *Snapshot) Clone(
 			fileSystemLayer = change.apiRequest.FileSystem.Layer
 		}
 	}
-	fs := newSnapshotFSBuilder(baseFS, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, host.options.PositionEncoding, host.toPath, fileSystemLayer)
+	fs := newSnapshotFSBuilder(host.fs, s.fs.overlays, overlays, s.fs.diskFiles, s.fs.diskDirectories, s.fs.nodeModulesRealpathAliases, host.options.PositionEncoding, host.toPath, fileSystemLayer)
 	change.fileChanges = s.processFileChanges(fs, change.fileChanges, logger, change.contentMapperContributions)
 
 	compilerOptionsForInferredProjects := s.compilerOptionsForInferredProjects

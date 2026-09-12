@@ -146,7 +146,6 @@ func (s *SnapshotHost) newRootSnapshot(id uint64, relativePatternSupport bool) *
 		&SnapshotFS{
 			toPath:   s.toPath,
 			fs:       s.fs,
-			baseFS:   s.fs,
 			overlays: make(map[tspath.Path]*Overlay),
 		},
 		&ConfigFileRegistry{},

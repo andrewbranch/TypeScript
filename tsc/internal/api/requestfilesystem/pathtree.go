@@ -5,8 +5,10 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/microsoft/TypeScript/tsc/internal/project"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
 )
@@ -24,8 +26,17 @@ type requestEntry interface {
 }
 
 type requestFile struct {
-	fileName string
-	content  string
+	fileName   string
+	content    string
+	handle     project.FileHandle
+	handleOnce sync.Once
+}
+
+func (file *requestFile) fileHandle() project.FileHandle {
+	file.handleOnce.Do(func() {
+		file.handle = project.NewFileHandle(file.fileName, file.content)
+	})
+	return file.handle
 }
 
 type requestSymlink struct {
@@ -143,6 +154,18 @@ func (node *requestPathNode) walkSymlinks(visit func(tspath.Path, *requestSymlin
 	}
 }
 
+func (node *requestPathNode) walkFiles(visit func(*requestFile)) {
+	if node == nil {
+		return
+	}
+	if file, ok := node.entry.(*requestFile); ok {
+		visit(file)
+	}
+	for _, child := range node.children {
+		child.walkFiles(visit)
+	}
+}
+
 func (node *requestPathNode) entries() (vfs.Entries, bool) {
 	if node == nil {
 		return vfs.Entries{}, false
@@ -172,6 +195,10 @@ func composeRequestPaths(base *requestPathNode, overlay *requestPathNode, fallba
 	if overlay == nil {
 		return base
 	}
+	var baseFile *requestFile
+	if base != nil {
+		baseFile, _ = base.entry.(*requestFile)
+	}
 	if overlay.fallback != requestFallbackInherit {
 		fallback = overlay.fallback
 		base = nil
@@ -191,6 +218,9 @@ func composeRequestPaths(base *requestPathNode, overlay *requestPathNode, fallba
 	overlayDirectory, _ := overlay.entry.(*requestDirectory)
 	if overlay.entry != nil {
 		result.entry = overlay.entry
+		if overlayFile, ok := overlay.entry.(*requestFile); ok && baseFile != nil && overlayFile.content == baseFile.content {
+			result.entry = baseFile
+		}
 		if overlayDirectory != nil && overlayDirectory.listing == nil && previousDirectory != nil {
 			result.entry = &requestDirectory{directoryName: overlayDirectory.directoryName, listing: previousDirectory.listing}
 		}

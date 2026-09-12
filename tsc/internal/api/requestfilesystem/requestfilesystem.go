@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/microsoft/TypeScript/tsc/internal/collections"
 	"github.com/microsoft/TypeScript/tsc/internal/project"
 	"github.com/microsoft/TypeScript/tsc/internal/tspath"
 	"github.com/microsoft/TypeScript/tsc/internal/vfs"
-	"github.com/microsoft/TypeScript/tsc/internal/vfs/layervfs"
 )
 
 // Kind controls how a request filesystem is used.
@@ -56,12 +56,12 @@ type RequestFileSystem struct {
 	RemovedPaths []string `json:"removedPaths,omitempty"`
 }
 
-// requestFileSystem is either a full filesystem or a layer over the session
-// host filesystem. Its base is always the host, which may be a callback filesystem;
-// inherited request entries are compacted into paths.
+// requestFileSystem stores one compacted request layer. When mounted, base is
+// the FileSource view below the request layer; host remains the session host
+// used by explicit host symlinks.
 type requestFileSystem struct {
 	kind Kind
-	// base is the next filesystem in the mounted layer stack.
+	// base is the mounted FileSource projected as a vfs.FS.
 	base vfs.FS
 	// host is the original session filesystem used by explicit host symlinks.
 	host                  vfs.FS
@@ -70,7 +70,15 @@ type requestFileSystem struct {
 	paths                 *requestPathNode
 }
 
-var _ layervfs.Layer = (*requestFileSystem)(nil)
+var _ project.FileSourceLayer = (*requestFileSystem)(nil)
+
+type requestFileSource struct {
+	request *requestFileSystem
+	base    project.FileSource
+	handles collections.SyncMap[tspath.Path, project.FileHandle]
+}
+
+var _ project.FileSource = (*requestFileSource)(nil)
 
 type resolvedRequestPath struct {
 	path            string
@@ -100,7 +108,7 @@ func getRequestFileSystem(fileSystem vfs.FS) *requestFileSystem {
 // host-backed snapshot also has no request layer. This distinction is a
 // compatibility workaround for the legacy updateSnapshot API and should be
 // removed with the snapshot state redesign in #64154.
-func NewForUpdate(params *RequestFileSystem, base layervfs.Layer, startsFromHost bool, host vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (layervfs.Layer, error) {
+func NewForUpdate(params *RequestFileSystem, base project.FileSourceLayer, startsFromHost bool, host vfs.FS, currentDirectory string, fileChanges *project.FileChangeSummary) (project.FileSourceLayer, error) {
 	if startsFromHost {
 		fileChanges.InvalidateAll = true
 	}
@@ -110,7 +118,7 @@ func NewForUpdate(params *RequestFileSystem, base layervfs.Layer, startsFromHost
 	baseRequestFileSystem, _ := base.(*requestFileSystem)
 	baseFileSystem := host
 	if baseRequestFileSystem != nil {
-		baseFileSystem = baseRequestFileSystem.Mount(host)
+		baseFileSystem = baseRequestFileSystem.mountFS(host)
 	}
 	if params.Kind == KindFull {
 		fileChanges.InvalidateAll = true
@@ -130,7 +138,7 @@ func NewForUpdate(params *RequestFileSystem, base layervfs.Layer, startsFromHost
 }
 
 // IsFullLayer reports whether layer contains a complete request filesystem.
-func IsFullLayer(layer layervfs.Layer) bool {
+func IsFullLayer(layer project.FileSourceLayer) bool {
 	requestFileSystem, _ := layer.(*requestFileSystem)
 	return requestFileSystem != nil && requestFileSystem.kind == KindFull
 }
@@ -219,10 +227,17 @@ func (s requestFileSystem) baseFileSystem() vfs.FS {
 	return s.base
 }
 
-func (s *requestFileSystem) Mount(base vfs.FS) vfs.FS {
+func (s *requestFileSystem) mountFS(base vfs.FS) *requestFileSystem {
 	mounted := *s
 	mounted.base = base
 	return &mounted
+}
+
+func (s *requestFileSystem) Mount(base project.FileSource, baseFS vfs.FS) project.FileSource {
+	return &requestFileSource{
+		request: s.mountFS(baseFS),
+		base:    base,
+	}
 }
 
 func (s *requestFileSystem) Shadows(path string) bool {
@@ -231,6 +246,47 @@ func (s *requestFileSystem) Shadows(path string) bool {
 	}
 	lookup := s.lookupPath(path)
 	return !lookup.ok || lookup.info != nil || lookup.followedSymlink
+}
+
+func (s *requestFileSource) FS() vfs.FS {
+	return s.request
+}
+
+func (s *requestFileSource) GetFile(fileName string) project.FileHandle {
+	return s.GetFileByPath(fileName, s.request.toPath(fileName))
+}
+
+func (s *requestFileSource) GetFileByPath(fileName string, path tspath.Path) project.FileHandle {
+	if !s.request.Shadows(fileName) {
+		return s.base.GetFileByPath(fileName, path)
+	}
+	lookup := s.request.lookupPath(fileName)
+	if !lookup.ok || lookup.info != nil && lookup.info.IsDir() {
+		return nil
+	}
+	if file, ok := lookup.info.(*requestFile); ok && !lookup.followedSymlink {
+		return file.fileHandle()
+	}
+	if handle, ok := s.handles.Load(path); ok {
+		return handle
+	}
+	content, ok := s.request.ReadFile(fileName)
+	if !ok {
+		return nil
+	}
+	handle, _ := s.handles.LoadOrStore(path, project.NewFileHandle(fileName, content))
+	return handle
+}
+
+func (s *requestFileSource) FileExists(fileName string, path tspath.Path) bool {
+	if s.request.Shadows(fileName) {
+		return s.request.FileExists(fileName)
+	}
+	return s.base.FileExists(fileName, path)
+}
+
+func (s *requestFileSource) GetAccessibleEntries(path string) vfs.Entries {
+	return s.request.GetAccessibleEntries(path)
 }
 
 func (s requestFileSystem) applyTo(base requestFileSystem) requestFileSystem {
