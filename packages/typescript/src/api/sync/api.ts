@@ -284,6 +284,7 @@ export interface ModuleResolverOptions {
  * A branded, binder-backed AST view with remote traversal and declaration symbol methods.
  * Use guard `.Remote` companions to retain these capabilities when narrowing or filtering.
  * Guards exported by this module also recover this API mode from ordinary AST types.
+ * Custom structural refinements and subclasses are not preserved by this view.
  * Assigning to ordinary AST types remains supported; the brand does not guarantee server availability.
  */
 export type Remote<T extends Node = Node> = RemoteNodeView<T, { (): Symbol; gen(): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>; }>;

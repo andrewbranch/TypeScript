@@ -42,6 +42,7 @@ import {
     visitEachChild,
     visitNodes,
 } from "../src/ast/index.ts";
+import { OuterExpressionKinds } from "../src/enums/outerExpressionKinds.ts";
 
 async function asyncTypes(api: AsyncAPI, plain: Declaration) {
     const lease = await api.createSourceFile("/file.ts", "function f() {}");
@@ -166,6 +167,7 @@ function modeSpecificGuards(node: Node, declaration: Declaration | SourceFile, n
         const expression: SyncRemote<Node> = node.expression;
         void expression;
     }
+    if (syncGuards.isOuterExpression.Remote(node, OuterExpressionKinds.Parentheses)) void node.expression;
     const constructor: ConstructorDeclaration | undefined = find(
         [] as readonly ClassElement[] | readonly TypeElement[],
         syncGuards.isConstructorDeclaration,
@@ -185,13 +187,19 @@ interface NamedClass extends ClassDeclaration {
 
 function generatedRemoteCompatibility(file: AsyncRemote<SourceFile>, custom: AsyncRemote<NamedClass>, token: AsyncRemote<DotToken>) {
     const plainFiles: readonly SourceFile[] = [file];
-    const name: AsyncRemote<Identifier> = custom.name;
-    const tag: "named" = custom.customTag;
+    const name: AsyncRemote<Identifier> | undefined = custom.name;
+    // @ts-expect-error Remote views expose standard AST shapes, not custom refinements.
+    void custom.customTag;
     const symbol: Promise<AsyncSymbol> = custom.getSymbol();
-    const local: NamedClass = cloneNode(custom);
+    const local: ClassDeclaration = cloneNode(custom);
     const kind: SyntaxKind.DotToken = token.kind;
     const containingFile: AsyncRemote<SourceFile> = token.getSourceFile();
-    void [plainFiles, name, tag, symbol, local, kind, containingFile];
+    void [plainFiles, name, symbol, local, kind, containingFile];
+}
+
+function broadRemoteNode(node: AsyncRemote<Node>) {
+    // @ts-expect-error Broad nodes do not acquire optional members from more specific base types.
+    void node.body;
 }
 
 async function asyncDeclarationSymbol(declaration: Declaration | SourceFile, checker: asyncGuards.Checker): Promise<AsyncSymbol | undefined> {
@@ -218,5 +226,5 @@ function ordinaryGeneric<T extends Node>(node: T, classLike: ClassLikeDeclaratio
 }
 
 test("opt-in remote AST types preserve API modes and ordinary guards", () => {
-    void [asyncTypes, syncTypes, unions, ordinaryGeneric, ordinaryHigherOrder, remoteBrand, remoteDeclaration, modeSpecificGuards, syncDeclarationSymbol, asyncDeclarationSymbol, generatedRemoteCompatibility, sharedGuardsHaveNoRemoteCompanions];
+    void [asyncTypes, syncTypes, unions, ordinaryGeneric, ordinaryHigherOrder, remoteBrand, remoteDeclaration, modeSpecificGuards, syncDeclarationSymbol, asyncDeclarationSymbol, generatedRemoteCompatibility, broadRemoteNode, sharedGuardsHaveNoRemoteCompanions];
 });

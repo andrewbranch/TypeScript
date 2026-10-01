@@ -1,10 +1,6 @@
 import type { Node } from "../ast/ast.ts";
 import type { RemoteNodeView } from "../ast/remote.ts";
 
-export type GuardedNode<TGuard> = TGuard extends (node: Node, ...args: never[]) => node is infer TNode & Node ? TNode & Node : never;
-
-export type GuardArguments<TGuard extends (...args: never[]) => unknown> = Parameters<TGuard> extends [unknown, ...infer TArgs] ? TArgs : never;
-
 export interface ModeNodeGuard<TNode extends Node, TGetSymbol extends () => unknown, TArgs extends unknown[] = []> {
     (node: Node, ...args: TArgs): node is TNode;
     Remote(node: Node, ...args: TArgs): node is RemoteNodeView<TNode, TGetSymbol>;

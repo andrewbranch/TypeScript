@@ -1639,18 +1639,83 @@ function generateIsGenerated(): string {
 function generateModeIsGenerated(): string {
     const guards = new Map<string, {
         hasHandle: boolean;
+        nodeType: string;
+        argumentsType: string;
     }>();
     for (const fileName of ["is.generated.ts", "is.ts"]) {
         const text = readFileSync(path.join(ROOT, "packages/typescript/src/ast", fileName), "utf8");
         const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
+        const aliases = new Map(source.statements.filter(ts.isTypeAliasDeclaration).map(alias => [alias.name.text, alias]));
+        const imports = new Map<string, { module: string; name: string; }>();
+        for (const statement of source.statements) {
+            if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier) && statement.importClause?.namedBindings && ts.isNamedImports(statement.importClause.namedBindings)) {
+                for (const element of statement.importClause.namedBindings.elements) {
+                    imports.set(element.name.text, { module: statement.moduleSpecifier.text, name: element.propertyName?.text ?? element.name.text });
+                }
+            }
+        }
+        const printer = ts.createPrinter({ removeComments: true });
+        function explicitType(type: ts.TypeNode, substitutions = new Map<string, ts.TypeNode>(), expanding = new Set<string>()): ts.TypeNode {
+            const result = ts.transform(type, [context => root => {
+                function visit(node: ts.Node): ts.VisitResult<ts.Node> {
+                    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
+                        const name = node.typeName.text;
+                        const substitution = substitutions.get(name);
+                        if (substitution) return substitution;
+                        const args = node.typeArguments?.map(argument => explicitType(argument, substitutions, expanding));
+                        const alias = aliases.get(name);
+                        if (alias) {
+                            if (expanding.has(name)) throw new Error(`Recursive guard type alias ${name}`);
+                            const next = new Map(substitutions);
+                            for (const [index, parameter] of (alias.typeParameters ?? []).entries()) {
+                                const argument = args?.[index] ?? parameter.default;
+                                if (!argument) throw new Error(`Missing guard type argument ${name}.${parameter.name.text}`);
+                                next.set(parameter.name.text, argument);
+                            }
+                            return explicitType(alias.type, next, new Set([...expanding, name]));
+                        }
+                        const imported = imports.get(name);
+                        if (!imported) throw new Error(`Unresolved guard type ${name} in ${fileName}`);
+                        if (imported.module === "./ast.ts") {
+                            return ts.factory.createTypeReferenceNode(ts.factory.createQualifiedName(ts.factory.createIdentifier("astTypes"), imported.name), args);
+                        }
+                        if (imported.module.startsWith("#enums/")) {
+                            return ts.factory.createImportTypeNode(
+                                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(imported.module)),
+                                undefined,
+                                ts.factory.createIdentifier(imported.name),
+                                args,
+                            );
+                        }
+                        throw new Error(`Unsupported guard type import ${imported.module}`);
+                    }
+                    return ts.visitEachChild(node, visit, context);
+                }
+                return ts.visitNode(root, visit) as ts.TypeNode;
+            }]);
+            const transformed = result.transformed[0];
+            result.dispose();
+            return transformed;
+        }
+        function typeText(type: ts.TypeNode): string {
+            return printer.printNode(ts.EmitHint.Unspecified, explicitType(type), source);
+        }
         for (const statement of source.statements) {
             if (
                 ts.isFunctionDeclaration(statement) && statement.name && statement.type
-                && ts.isTypePredicateNode(statement.type)
+                && ts.isTypePredicateNode(statement.type) && statement.type.type
                 && statement.parameters[0]?.type?.getText(source) === "Node"
                 && statement.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)
             ) {
-                guards.set(statement.name.text, { hasHandle: false });
+                const args = statement.parameters.slice(1).map(parameter => {
+                    if (!parameter.type) throw new Error(`Missing guard parameter type in ${statement.name!.text}`);
+                    return `${parameter.dotDotDotToken ? "..." : ""}${parameter.name.getText(source)}${parameter.questionToken || parameter.initializer ? "?" : ""}: ${typeText(parameter.type)}`;
+                });
+                guards.set(statement.name.text, {
+                    hasHandle: false,
+                    nodeType: typeText(statement.type.type),
+                    argumentsType: args.length ? `, [${args.join(", ")}]` : "",
+                });
             }
             if (ts.isModuleDeclaration(statement) && statement.body && ts.isModuleBlock(statement.body)) {
                 const guard = guards.get(statement.name.getText(source));
@@ -1663,9 +1728,10 @@ function generateModeIsGenerated(): string {
     const out = [
         "// Code generated by tools/scripts/tsc/generate-ts-ast.ts. DO NOT EDIT.",
         'import type { Node } from "../../ast/ast.ts";',
+        'import type * as astTypes from "../../ast/ast.ts";',
         'import * as ast from "../../ast/is.ts";',
         'import { isRemoteNode as isAnyRemoteNode } from "../../ast/remote.ts";',
-        'import { createModeNodeGuard, type GuardArguments, type GuardedNode, type ModeNodeGuard } from "../is.ts";',
+        'import { createModeNodeGuard, type ModeNodeGuard } from "../is.ts";',
         'import { API, type Remote } from "./api.ts";',
         "",
         "/** Tests whether a node belongs to this API mode's binder-backed source files. */",
@@ -1678,8 +1744,8 @@ function generateModeIsGenerated(): string {
         'type SymbolMethod = Remote<import("../../ast/ast.ts").Declaration>["getSymbol"];',
         "",
     ];
-    for (const [name, { hasHandle }] of guards) {
-        const type = `ModeNodeGuard<GuardedNode<typeof ast.${name}>, SymbolMethod, GuardArguments<typeof ast.${name}>>`;
+    for (const [name, { hasHandle, nodeType, argumentsType }] of guards) {
+        const type = `ModeNodeGuard<${nodeType}, SymbolMethod${argumentsType}>`;
         out.push(
             hasHandle
                 ? `export const ${name}: ${type} & { Handle: typeof ast.${name}.Handle; } = Object.assign(createModeNodeGuard(ast.${name}, isRemoteNode), { Handle: ast.${name}.Handle });`
