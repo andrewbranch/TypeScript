@@ -1,5 +1,6 @@
 import {
     computeLineStarts,
+    type Declaration,
     type FileReference,
     type LineAndCharacter,
     type MappedDiagnosticDirective,
@@ -12,9 +13,15 @@ import {
     SyntaxKind,
     TokenFlags,
 } from "../../ast/index.ts";
-import type { API as AsyncAPI } from "../async/api.ts";
+import type {
+    API as AsyncAPI,
+    Symbol as AsyncSymbol,
+} from "../async/api.ts";
 import type { CachedSourceFile } from "../sourceFileCache.ts";
-import type { API as SyncAPI } from "../sync/api.ts";
+import type {
+    API as SyncAPI,
+    Symbol as SyncSymbol,
+} from "../sync/api.ts";
 import type { TimingCollector } from "../timing.ts";
 import { MsgpackReader } from "./msgpack.ts";
 import {
@@ -104,6 +111,7 @@ export class RemoteSourceFile extends RemoteNode implements SourceFileInfo {
     private _cachedSupplementalSourceFileNames: readonly string[] | undefined;
     private _cachedDiagnosticDirectives: readonly MappedDiagnosticDirective[] | undefined;
     private _diagnosticDirectivesRead = false;
+    private readonly symbolMethods = new Map<number, () => unknown>();
 
     constructor(
         data: Uint8Array,
@@ -128,6 +136,32 @@ export class RemoteSourceFile extends RemoteNode implements SourceFileInfo {
         // Every node slot is materializable on demand except the nil sentinel at
         // index 0 and the source-file node at index 1, which is pre-materialized.
         timing?.recordSourceFileFetched(Math.max(0, this.nodes.length - 2));
+    }
+
+    getSymbolMethod(index: number): () => unknown {
+        let method = this.symbolMethods.get(index);
+        if (!method) {
+            const api = this.api;
+            if (!api || !this.symbolCache) throw new Error("Source file has no binder symbol state");
+            const declaration = this.getOrCreateNodeAtIndex(index) as Declaration;
+            const requireSymbol = <T extends AsyncSymbol | SyncSymbol>(symbol: T | undefined): T => {
+                if (!symbol) throw new Error(`Remote declaration at index ${index} has no binder symbol`);
+                return symbol;
+            };
+            const lookup = api.getSymbol;
+            method = () => {
+                const result = api.getSymbol(declaration);
+                return result instanceof Promise ? result.then(requireSymbol) : requireSymbol(result);
+            };
+            if ("gen" in lookup) {
+                const gen = function* () {
+                    return requireSymbol(yield* lookup.gen(declaration));
+                };
+                Object.assign(method, { gen });
+            }
+            this.symbolMethods.set(index, method);
+        }
+        return method;
     }
 
     /** @internal */

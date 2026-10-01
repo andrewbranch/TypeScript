@@ -21,6 +21,7 @@ import {
     isNamedImports,
     isObjectLiteralExpression,
     isPropertyAssignment,
+    isRemoteNode,
     isReturnStatement,
     isShorthandPropertyAssignment,
     isStringLiteral,
@@ -78,6 +79,10 @@ import {
     type InterfaceType,
     type IntrinsicType,
     isErrorType,
+    isExpressionStatement as isRemoteExpressionStatement,
+    isFunctionDeclaration as isRemoteFunctionDeclaration,
+    isModuleDeclaration as isRemoteModuleDeclaration,
+    isVariableStatement as isRemoteVariableStatement,
     JsxEmit,
     type LiteralType,
     type MappedType,
@@ -561,7 +566,31 @@ describe("API", { concurrency }, () => {
         const deepClone = getSynthesizedDeepClone(declaration);
         assert.equal(await getSymbol(shallowClone), undefined);
         assert.equal(await api.getSymbol(deepClone), undefined);
-        assert.equal("getSymbol" in declaration, false);
+        assert.equal(isRemoteNode(shallowClone), false);
+    });
+
+    test("remote guards expose declaration symbol methods without changing ordinary guards", async () => {
+        await using api = spawnAPI();
+        await using lease = await api.createSourceFile("/remote.ts", "function f(value: number) { return value; }");
+        const file = lease.sourceFile;
+        assert.ok(isRemoteNode(file));
+        const declaration = [...file.statements].find(isRemoteFunctionDeclaration.Remote);
+        assert.ok(declaration);
+        const symbol = await declaration.getSymbol();
+        assert.equal(symbol.name, "f");
+        assert.strictEqual(await getSymbol(declaration), symbol);
+        assert.strictEqual(await api.getSymbol(declaration), symbol);
+        assert.strictEqual(declaration.getSymbol, declaration.getSymbol);
+        const parameterSymbol = await declaration.parameters[0].getSymbol();
+        assert.equal(parameterSymbol.name, "value");
+        const local = cloneNode(declaration);
+        assert.ok(isFunctionDeclaration(local));
+        assert.equal(isRemoteFunctionDeclaration.Remote(local), false);
+        assert.equal(isRemoteNode(local), false);
+        assert.equal(isRemoteFunctionDeclaration.Remote(file.statements[0].getChildren()[0]), false);
+        const deep = getSynthesizedDeepClone(file);
+        assert.equal(isRemoteNode(deep), false);
+        assert.equal(deep.statements.some(isRemoteFunctionDeclaration.Remote), false);
     });
 
     test("source files own separate declaration result and request caches", async () => {
@@ -2602,7 +2631,7 @@ describe("NodeArray", { concurrency }, () => {
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.ts");
         assert.ok(sourceFile);
-        const statements = sourceFile.statements.filter(isExpressionStatement);
+        const statements = sourceFile.statements.filter(isRemoteExpressionStatement.Remote);
         assert.ok(isCallExpression(statements[0].expression));
         assert.equal(statements[0].expression.arguments.hasTrailingComma, true);
         assert.ok(isCallExpression(statements[1].expression));
@@ -4287,7 +4316,7 @@ export function gh1449<T extends [foo: any, bar?: any]>(a: T): T {
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.ts");
         assert.ok(sourceFile);
-        const functionDeclaration = sourceFile.statements.find(isFunctionDeclaration);
+        const functionDeclaration = sourceFile.statements.find(isRemoteFunctionDeclaration.Remote);
         assert.ok(functionDeclaration);
         const constraint = functionDeclaration.typeParameters?.[0].constraint;
         assert.ok(constraint);
@@ -6102,7 +6131,7 @@ export { x as '${maliciousName}' };
 
         const typesFile = await project.program.getSourceFile("/src/types.d.ts");
         assert.ok(typesFile);
-        const moduleDeclaration = typesFile.statements.find(isModuleDeclaration);
+        const moduleDeclaration = typesFile.statements.find(isRemoteModuleDeclaration.Remote);
         assert.ok(moduleDeclaration);
         const ambientModule = await project.checker.getSymbolAtLocation(moduleDeclaration.name);
         assert.ok(ambientModule);
@@ -6175,7 +6204,7 @@ export const total = add(1, 2);
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.ts");
         assert.ok(sourceFile);
-        const functions = [...sourceFile.statements].filter(isFunctionDeclaration);
+        const functions = [...sourceFile.statements].filter(isRemoteFunctionDeclaration.Remote);
         const add = functions[0];
         const identity = functions[1];
         assert.ok(add);
@@ -6213,7 +6242,7 @@ export const total = add(1, 2);
         // A variable declaration walks up its comment-location chain
         // (declaration -> declaration list -> statement) to the JSDoc on the
         // containing variable statement.
-        const variable = sourceFile.statements.find(isVariableStatement);
+        const variable = sourceFile.statements.find(isRemoteVariableStatement.Remote);
         assert.ok(variable);
         const declaration = variable.declarationList.declarations[0];
         assert.deepEqual(getJSDocTags(declaration).map(t => t.tagName.text), ["deprecated"]);
@@ -6237,7 +6266,7 @@ var measure = function (name) {
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.js");
         assert.ok(sourceFile);
-        const variable = sourceFile.statements.find(isVariableStatement);
+        const variable = sourceFile.statements.find(isRemoteVariableStatement.Remote);
         assert.ok(variable);
         const declaration = variable.declarationList.declarations[0];
         const funcExpr = declaration.initializer;
@@ -6272,7 +6301,7 @@ const cast = /** @type {number} */ (someValue);
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.js");
         assert.ok(sourceFile);
-        const statements = [...sourceFile.statements].filter(isVariableStatement);
+        const statements = [...sourceFile.statements].filter(isRemoteVariableStatement.Remote);
 
         // A @type tag directly on a declaration is reported for that declaration.
         const valueDecl = statements[0].declarationList.declarations[0];
@@ -6302,7 +6331,7 @@ export const answer = 42;
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.ts");
         assert.ok(sourceFile);
-        const answer = [...sourceFile.statements].filter(isVariableStatement)[0].declarationList.declarations[0];
+        const answer = [...sourceFile.statements].filter(isRemoteVariableStatement.Remote)[0].declarationList.declarations[0];
         assert.ok(answer);
 
         // Every tag on `answer`'s JSDoc comment is owned by `answer`, so the whole
@@ -6330,7 +6359,7 @@ export const answer = 42;
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.ts");
         assert.ok(sourceFile);
-        const answer = [...sourceFile.statements].filter(isVariableStatement)[0].declarationList.declarations[0];
+        const answer = [...sourceFile.statements].filter(isRemoteVariableStatement.Remote)[0].declarationList.declarations[0];
         assert.ok(answer);
 
         // With no tags to discard, the JSDoc node (and its description) is
@@ -6358,7 +6387,7 @@ const cast = /** @type {number} */ (someValue);
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.js");
         assert.ok(sourceFile);
-        const statements = [...sourceFile.statements].filter(isVariableStatement);
+        const statements = [...sourceFile.statements].filter(isRemoteVariableStatement.Remote);
 
         // The @type cast tag is not owned by `castDecl`, so no tags qualify and
         // the JSDoc comment is not returned at all.
@@ -6384,7 +6413,7 @@ var measure = function (name) {
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/main.js");
         assert.ok(sourceFile);
-        const variable = sourceFile.statements.find(isVariableStatement);
+        const variable = sourceFile.statements.find(isRemoteVariableStatement.Remote);
         assert.ok(variable);
         const funcExpr = variable.declarationList.declarations[0].initializer;
         assert.ok(funcExpr);
@@ -8081,7 +8110,7 @@ describe("AST roundtrips", { concurrency }, () => {
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/index.ts");
         assert(sourceFile);
-        const param = (sourceFile.statements[0] as import("@typescript/typescript/unstable/ast").FunctionDeclaration).parameters[0];
+        const param = cast(sourceFile.statements[0], isFunctionDeclaration).parameters[0];
         assert(param);
         const type = param.type as import("@typescript/typescript/unstable/ast").TypeOperatorNode;
         assert(type);
@@ -8101,7 +8130,7 @@ describe("AST roundtrips", { concurrency }, () => {
         const project = snapshot.getConfiguredProject("/tsconfig.json")!;
         const sourceFile = await project.program.getSourceFile("/src/index.ts");
         assert(sourceFile);
-        const stmt = sourceFile.statements[0] as import("@typescript/typescript/unstable/ast").VariableStatement;
+        const stmt = cast(sourceFile.statements[0], isVariableStatement);
         const object = stmt.declarationList.declarations[0].initializer as import("@typescript/typescript/unstable/ast").ObjectLiteralExpression;
         const assignment = object.properties[0] as import("@typescript/typescript/unstable/ast").SpreadAssignment;
         assert(assignment);
@@ -8124,7 +8153,7 @@ describe("AST roundtrips", { concurrency }, () => {
         const sourceFile = await project.program.getSourceFile("/src/index.ts");
         assert(sourceFile);
         {
-            const stmt = sourceFile.statements[0] as import("@typescript/typescript/unstable/ast").VariableStatement;
+            const stmt = cast(sourceFile.statements[0], isVariableStatement);
             const list = stmt.declarationList;
             assert(list.flags & NodeFlags.Const);
         }
@@ -8194,7 +8223,7 @@ doThing();
             for (const file of project.rootFiles) {
                 const source = await project.program.getSourceFile(file);
                 assert(source);
-                let clone: typeof source;
+                let clone: SourceFile;
 
                 try {
                     await api.printer.printNode(source);

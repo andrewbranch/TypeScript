@@ -622,7 +622,7 @@ function getRemoteSourceFileAndChecker(api: API, configPath: string, filePath: s
     return [project.program.getSourceFile(filePath)!, project.checker] as const;
 }
 
-function getRemoteSourceFile(api: API, configPath: string, filePath: string) {
+function getRemoteSourceFile(api: API, configPath: string, filePath: string): SourceFile {
     return getRemoteSourceFileAndChecker(api, configPath, filePath)[0];
 }
 

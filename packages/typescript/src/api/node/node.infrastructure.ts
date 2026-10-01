@@ -66,6 +66,7 @@ export interface SourceFileInfo {
     readNodeIndexArray(offset: number): readonly Node[];
     readStringArray(offset: number): readonly string[];
     getOrCreateNodeAtIndex(index: number): Node;
+    getSymbolMethod(index: number): () => unknown;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

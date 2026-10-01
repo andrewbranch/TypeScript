@@ -31,6 +31,7 @@ import {
     type Node,
     type ParameterDeclaration,
     type Path,
+    type RemoteNodeView,
     type SourceFile,
     type StringLiteralLikeNode,
     type SyntaxKind,
@@ -262,6 +263,16 @@ export interface ModuleResolverOptions {
     resolveModuleName?: ResolveModuleNameCallback | undefined;
 }
 
+/**
+ * A branded, binder-backed AST view with remote traversal and declaration symbol methods.
+ * Use guard `.Remote` companions to retain these capabilities when narrowing or filtering.
+ * Guards exported by this module also recover this API mode from ordinary AST types.
+ * Assigning to ordinary AST types remains supported; the brand does not guarantee server availability.
+ */
+export type Remote<T extends Node = Node> = RemoteNodeView<T, () => Promise<Symbol>>; // @sync: export type Remote<T extends Node = Node> = RemoteNodeView<T, { (): Symbol; gen(): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>; }>;
+
+export * from "./is.generated.ts";
+
 export interface ResolveModuleNameCallbackOptions {
     snapshot: Snapshot | InProgressSnapshot | undefined;
 }
@@ -358,6 +369,8 @@ export class API<FromLSP extends boolean = false> implements FormatDiagnosticsHo
     /**
      * Looks up the declaration's symbol.
      */
+    getSymbol(declaration: Remote<Declaration>): Promise<Symbol>;
+    getSymbol(declaration: Declaration): Promise<Symbol | undefined>;
     async getSymbol(declaration: Declaration): Promise<Symbol | undefined> {
         const file = getRemoteSourceFile(declaration);
         if (!file) return undefined;
@@ -572,7 +585,7 @@ export class API<FromLSP extends boolean = false> implements FormatDiagnosticsHo
 
     private addSourceFileLease(sourceFile: RemoteSourceFile, lease: number): RetainedSourceFile {
         const cached = this.sourceFileCache.setForLease(sourceFile, lease);
-        const retained = new RetainedSourceFile(cached as unknown as SourceFile, lease, () => {
+        const retained = new RetainedSourceFile(cached as unknown as Remote<SourceFile>, lease, () => {
             this.activeSourceFileLeases.delete(lease);
             this.sourceFileCache.releaseLease(lease);
         });
@@ -876,6 +889,8 @@ function getNodeAPI(node: Node): API<boolean> | undefined {
 }
 
 /** Looks up the declaration's symbol. */
+export function getSymbol(declaration: Remote<Declaration>): Promise<Symbol>;
+export function getSymbol(declaration: Declaration): Promise<Symbol | undefined>;
 export async function getSymbol(declaration: Declaration): Promise<Symbol | undefined> {
     const api = getNodeAPI(declaration);
     return api?.getSymbol(declaration);
@@ -883,23 +898,27 @@ export async function getSymbol(declaration: Declaration): Promise<Symbol | unde
 
 // @sync-only-start
 // export declare namespace getSymbol {
+//     function gen(declaration: Remote<Declaration>): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>;
 //     function gen(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]>;
 // }
-// getSymbol.gen = function* (declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]> {
+// function getSymbolGenerator(declaration: Remote<Declaration>): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>;
+// function getSymbolGenerator(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]>;
+// function* getSymbolGenerator(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]> {
 //     const api = getNodeAPI(declaration);
 //     return api ? yield* api.getSymbol.gen(declaration) : undefined;
-// };
+// }
+// getSymbol.gen = getSymbolGenerator;
 // @sync-only-end
 
 /** An independently retained source file and its disposable remote-lifetime lease. */
 export class RetainedSourceFile {
-    readonly sourceFile: SourceFile;
+    readonly sourceFile: Remote<SourceFile>;
     private readonly lease: number;
     private readonly onDispose: () => void;
     private disposed = false;
     private disposePromise: Promise<void> | undefined;
 
-    constructor(sourceFile: SourceFile, lease: number, onDispose: () => void) {
+    constructor(sourceFile: Remote<SourceFile>, lease: number, onDispose: () => void) {
         this.sourceFile = sourceFile;
         this.lease = lease;
         this.onDispose = onDispose;
@@ -1724,14 +1743,14 @@ export class Program<Id extends ProjectId = ProjectId> implements FormatDiagnost
         return this.project.compilerOptions;
     }
 
-    async getSourceFile(file: DocumentIdentifier): Promise<SourceFile | undefined> {
+    async getSourceFile(file: DocumentIdentifier): Promise<Remote<SourceFile> | undefined> {
         const fileName = resolveFileName(file);
         const path = this.toPath(fileName);
 
         // Check if we already have a retained cache entry for this (snapshot, project) pair
         const retained = this.sourceFileCache.getRetained(path, this.snapshotId, this.project.id);
         if (retained) {
-            return retained as unknown as SourceFile;
+            return retained as unknown as Remote<SourceFile>;
         }
 
         // Fetch from server
@@ -1746,7 +1765,7 @@ export class Program<Id extends ProjectId = ProjectId> implements FormatDiagnost
 
         // Create a new RemoteSourceFile and cache it (set returns existing if hash matches)
         const decoded = new RemoteSourceFile(binaryData, this.decoder, this.client.getTimingCollector(), this.project.api);
-        return this.sourceFileCache.set(decoded, this.snapshotId, this.project.id) as unknown as SourceFile;
+        return this.sourceFileCache.set(decoded, this.snapshotId, this.project.id) as unknown as Remote<SourceFile>;
     }
 
     async getResolvedModule(
@@ -3142,17 +3161,17 @@ export class NodeHandle<out T extends Node = Node> {
      * the handle is used. Declarations of file-owned symbols identify an exact source file and
      * resolve through it, independently of any project.
      */
-    async resolve(project: Project | undefined = this.canonicalProject): Promise<T | undefined> {
+    async resolve(project: Project | undefined = this.canonicalProject): Promise<Remote<T> | undefined> {
         if (this.fileOwner) {
             const sourceFile = this.fileOwner.record.file ?? await this.fetchOwnerFile(this.fileOwner);
-            return sourceFile.getOrCreateNodeAtIndex(this.index) as T | undefined;
+            return sourceFile.getOrCreateNodeAtIndex(this.index) as Remote<T> | undefined;
         }
         if (!project) throw new Error(`Node handle for '${this.path}' has no project context`);
         const sourceFile = await project.program.getSourceFile(this.path);
         if (!sourceFile) {
             return undefined;
         }
-        return (sourceFile as unknown as RemoteSourceFile).getOrCreateNodeAtIndex(this.index) as T | undefined;
+        return (sourceFile as unknown as RemoteSourceFile).getOrCreateNodeAtIndex(this.index) as Remote<T> | undefined;
     }
 
     private async fetchOwnerFile(fileOwner: SourceFileOwner): Promise<RemoteSourceFile> {

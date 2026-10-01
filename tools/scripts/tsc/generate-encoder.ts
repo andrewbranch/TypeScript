@@ -1669,6 +1669,9 @@ function emitRemoteNodeList(w: CodeWriter) {
 
 function emitRemoteNodeClassOpen(w: CodeWriter) {
     w.write(`export class RemoteNode extends RemoteNodeBase implements Node {`);
+    w.write(`    get getSymbol(): () => unknown {`);
+    w.write(`        return this.sourceFile.getSymbolMethod(this.index);`);
+    w.write(`    }`);
     w.write(`    protected static NODE_LEN: number = NODE_LEN;`);
     w.write(`    protected override get sourceFile(): SourceFileInfo {`);
     w.write(`        return this._sourceFile;`);

@@ -40,6 +40,8 @@ import {
     type IndexInfo,
     IndexKind,
     type InterfaceType,
+    isFunctionDeclaration as isRemoteFunctionDeclaration,
+    isVariableStatement as isRemoteVariableStatement,
     type LiteralType,
     type MappedType,
     ModuleKind,
@@ -442,13 +444,26 @@ function assertPublicGeneratorCoverage(owners: readonly { readonly name: string;
 describe("API - generator batching", { concurrency: areTestsFiltered() }, () => {
     test("looks up binder symbols through standalone and API generators", () => {
         using api = spawnAPI();
-        using lease = api.createSourceFile("/symbols.ts", "function present() {}");
+        using lease = api.createSourceFile("/symbols.ts", "function present() {} function fresh() {}");
         const declaration = cast(lease.sourceFile.statements[0], isFunctionDeclaration);
         const [symbol] = api.batch(getSymbol.gen(declaration));
         assert.ok(symbol);
         assert.equal(symbol.name, "present");
         const [cached] = api.batch(api.getSymbol.gen(declaration));
         assert.strictEqual(cached, symbol);
+        const remoteDeclaration = lease.sourceFile.statements.find(isRemoteFunctionDeclaration.Remote)!;
+        const [methodResult, freeResult, apiResult] = api.batch(
+            remoteDeclaration.getSymbol.gen(),
+            getSymbol.gen(remoteDeclaration),
+            api.getSymbol.gen(remoteDeclaration),
+        );
+        assert.strictEqual(methodResult, symbol);
+        assert.strictEqual(freeResult, symbol);
+        assert.strictEqual(apiResult, symbol);
+        const freshDeclaration = lease.sourceFile.statements.filter(isRemoteFunctionDeclaration.Remote)[1];
+        const [freshSymbol] = api.batch(freshDeclaration.getSymbol.gen());
+        assert.ok(freshSymbol);
+        assert.equal(freshSymbol.name, "fresh");
         const clone = cloneNode(declaration);
         assert.deepEqual(api.batch(getSymbol.gen(clone), api.getSymbol.gen(clone)), [undefined, undefined]);
     });
@@ -1504,7 +1519,7 @@ describe("API - generator batching", { concurrency: areTestsFiltered() }, () => 
             const predicateDeclaration = indexFile.statements.find(statement => isFunctionDeclaration(statement) && statement.name?.text === "isDerived")!;
             const predicateSignature = checker.getSignatureFromDeclaration(predicateDeclaration);
             const badCallDeclaration = indexFile.statements
-                .filter(isVariableStatement)
+                .filter(isRemoteVariableStatement.Remote)
                 .flatMap(statement => [...statement.declarationList.declarations])
                 .find(declaration => isIdentifier(declaration.name) && declaration.name.text === "badCall")!;
             const unknownSignature = checker.getResolvedSignature(cast(badCallDeclaration.initializer, isCallExpression));

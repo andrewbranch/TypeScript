@@ -12,6 +12,7 @@ import {
     createNumericLiteral,
     createStringLiteral,
 } from "./factory.generated.ts";
+import type { LocalNode } from "./remote.ts";
 import { visitEachChild } from "./visitor.ts";
 
 function isArray(value: any): value is readonly unknown[] {
@@ -92,9 +93,9 @@ function setTextRange<T extends Node>(node: T, range: ReadonlyTextRange | undefi
  * @param node The node to clone.
  * @param includeTrivia Whether to preserve the text range (pos/end) on the clone.
  */
-export function getSynthesizedDeepClone<T extends Node>(node: T, includeTrivia?: boolean): T;
-export function getSynthesizedDeepClone<T extends Node>(node: T | undefined, includeTrivia?: boolean): T | undefined;
-export function getSynthesizedDeepClone<T extends Node>(node: T | undefined, includeTrivia = true): T | undefined {
+export function getSynthesizedDeepClone<T extends Node>(node: T, includeTrivia?: boolean): LocalNode<T>;
+export function getSynthesizedDeepClone<T extends Node>(node: T | undefined, includeTrivia?: boolean): LocalNode<T> | undefined;
+export function getSynthesizedDeepClone(node: Node | undefined, includeTrivia = true): Node | undefined {
     const clone = node && getSynthesizedDeepCloneWorker(node);
     if (clone && !includeTrivia) {
         (clone as any).pos = -1;
@@ -106,9 +107,9 @@ export function getSynthesizedDeepClone<T extends Node>(node: T | undefined, inc
 /**
  * Creates deep clones of a NodeArray and all its elements.
  */
-export function getSynthesizedDeepClones<T extends Node>(nodes: NodeArray<T>, includeTrivia?: boolean): NodeArray<T>;
-export function getSynthesizedDeepClones<T extends Node>(nodes: NodeArray<T> | undefined, includeTrivia?: boolean): NodeArray<T> | undefined;
-export function getSynthesizedDeepClones<T extends Node>(nodes: NodeArray<T> | undefined, includeTrivia = true): NodeArray<T> | undefined {
+export function getSynthesizedDeepClones<T extends Node>(nodes: NodeArray<T>, includeTrivia?: boolean): NodeArray<LocalNode<T>>;
+export function getSynthesizedDeepClones<T extends Node>(nodes: NodeArray<T> | undefined, includeTrivia?: boolean): NodeArray<LocalNode<T>> | undefined;
+export function getSynthesizedDeepClones(nodes: NodeArray<Node> | undefined, includeTrivia = true): NodeArray<Node> | undefined {
     if (nodes) {
         const cloned = createNodeArray(
             nodes.map(n => getSynthesizedDeepClone(n, includeTrivia)),
@@ -120,16 +121,16 @@ export function getSynthesizedDeepClones<T extends Node>(nodes: NodeArray<T> | u
     return nodes;
 }
 
-function getSynthesizedDeepCloneWorker<T extends Node>(node: T): T {
+function getSynthesizedDeepCloneWorker(node: Node): Node {
     const visited = visitEachChild(node, n => getSynthesizedDeepCloneWorker(n));
 
     if (visited === node) {
         // Leaf node — visitEachChild returned the same node since there are no children.
         // We need to explicitly clone it.
         const clone = node.kind === SyntaxKind.StringLiteral
-            ? createStringLiteral((node as Node as StringLiteral).text, (node as Node as StringLiteral).tokenFlags) as Node as T
+            ? createStringLiteral((node as StringLiteral).text, (node as StringLiteral).tokenFlags)
             : node.kind === SyntaxKind.NumericLiteral
-            ? createNumericLiteral((node as Node as NumericLiteral).text, (node as Node as NumericLiteral).tokenFlags) as Node as T
+            ? createNumericLiteral((node as NumericLiteral).text, (node as NumericLiteral).tokenFlags)
             : cloneNode(node);
         return setTextRange(clone, node);
     }

@@ -230,6 +230,9 @@ export class RemoteNodeList extends Array<RemoteNode> implements NodeArray<Remot
 }
 
 export class RemoteNode extends RemoteNodeBase implements Node {
+    get getSymbol(): () => unknown {
+        return this.sourceFile.getSymbolMethod(this.index);
+    }
     protected static NODE_LEN: number = NODE_LEN;
     protected override get sourceFile(): SourceFileInfo {
         return this._sourceFile;

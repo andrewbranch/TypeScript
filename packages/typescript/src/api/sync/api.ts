@@ -48,6 +48,7 @@ import {
     type Node,
     type ParameterDeclaration,
     type Path,
+    type RemoteNodeView,
     type SourceFile,
     type StringLiteralLikeNode,
     type SyntaxKind,
@@ -279,6 +280,16 @@ export interface ModuleResolverOptions {
     resolveModuleName?: ResolveModuleNameCallback | undefined;
 }
 
+/**
+ * A branded, binder-backed AST view with remote traversal and declaration symbol methods.
+ * Use guard `.Remote` companions to retain these capabilities when narrowing or filtering.
+ * Guards exported by this module also recover this API mode from ordinary AST types.
+ * Assigning to ordinary AST types remains supported; the brand does not guarantee server availability.
+ */
+export type Remote<T extends Node = Node> = RemoteNodeView<T, { (): Symbol; gen(): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>; }>;
+
+export * from "./is.generated.ts";
+
 export interface ResolveModuleNameCallbackOptions {
     snapshot: Snapshot | InProgressSnapshot | undefined;
 }
@@ -378,32 +389,35 @@ export class API<FromLSP extends boolean = false> implements FormatDiagnosticsHo
      * Looks up the declaration's symbol.
      */
     get getSymbol(): {
+        (declaration: Remote<Declaration>): Symbol;
         (declaration: Declaration): Symbol | undefined;
+        gen(declaration: Remote<Declaration>): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>;
         gen(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]>;
     } {
         const owner = this;
-        return cacheGeneratorMethod(
-            owner,
-            "getSymbol",
-            function (declaration: Declaration): Symbol | undefined {
-                const file = getRemoteSourceFile(declaration);
-                if (!file) return undefined;
-                const record = file.symbolCache as CachedSourceFile<Symbol> | undefined;
-                if (!record) return undefined;
-                const index = parseNodeHandle(getNodeId(declaration)).index;
-                if (record.symbolsByDeclarationNodeIndex.has(index)) return record.symbolsByDeclarationNodeIndex.get(index);
-                return owner.fetchDeclarationSymbol(record, index);
-            },
-            function* (declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]> {
-                const file = getRemoteSourceFile(declaration);
-                if (!file) return undefined;
-                const record = file.symbolCache as CachedSourceFile<Symbol> | undefined;
-                if (!record) return undefined;
-                const index = parseNodeHandle(getNodeId(declaration)).index;
-                if (record.symbolsByDeclarationNodeIndex.has(index)) return record.symbolsByDeclarationNodeIndex.get(index);
-                return yield* owner.fetchDeclarationSymbol.gen(record, index);
-            },
-        );
+        function getSymbol(declaration: Remote<Declaration>): Symbol;
+        function getSymbol(declaration: Declaration): Symbol | undefined;
+        function getSymbol(declaration: Declaration): Symbol | undefined {
+            const file = getRemoteSourceFile(declaration);
+            if (!file) return undefined;
+            const record = file.symbolCache as CachedSourceFile<Symbol> | undefined;
+            if (!record) return undefined;
+            const index = parseNodeHandle(getNodeId(declaration)).index;
+            if (record.symbolsByDeclarationNodeIndex.has(index)) return record.symbolsByDeclarationNodeIndex.get(index);
+            return owner.fetchDeclarationSymbol(record, index);
+        }
+        function gen(declaration: Remote<Declaration>): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>;
+        function gen(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]>;
+        function* gen(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]> {
+            const file = getRemoteSourceFile(declaration);
+            if (!file) return undefined;
+            const record = file.symbolCache as CachedSourceFile<Symbol> | undefined;
+            if (!record) return undefined;
+            const index = parseNodeHandle(getNodeId(declaration)).index;
+            if (record.symbolsByDeclarationNodeIndex.has(index)) return record.symbolsByDeclarationNodeIndex.get(index);
+            return yield* owner.fetchDeclarationSymbol.gen(record, index);
+        }
+        return cacheGeneratorMethod(owner, "getSymbol", getSymbol, gen);
     }
 
     private get fetchDeclarationSymbol(): {
@@ -823,7 +837,7 @@ export class API<FromLSP extends boolean = false> implements FormatDiagnosticsHo
 
     private addSourceFileLease(sourceFile: RemoteSourceFile, lease: number): RetainedSourceFile {
         const cached = this.sourceFileCache.setForLease(sourceFile, lease);
-        const retained = new RetainedSourceFile(cached as unknown as SourceFile, lease, () => {
+        const retained = new RetainedSourceFile(cached as unknown as Remote<SourceFile>, lease, () => {
             this.activeSourceFileLeases.delete(lease);
             this.sourceFileCache.releaseLease(lease);
         });
@@ -1428,28 +1442,34 @@ function getNodeAPI(node: Node): API<boolean> | undefined {
 }
 
 /** Looks up the declaration's symbol. */
+export function getSymbol(declaration: Remote<Declaration>): Symbol;
+export function getSymbol(declaration: Declaration): Symbol | undefined;
 export function getSymbol(declaration: Declaration): Symbol | undefined {
     const api = getNodeAPI(declaration);
     return api?.getSymbol(declaration);
 }
 
 export declare namespace getSymbol {
+    function gen(declaration: Remote<Declaration>): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>;
     function gen(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]>;
 }
-getSymbol.gen = function* (declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]> {
+function getSymbolGenerator(declaration: Remote<Declaration>): Generator<ProtocolRequest, Symbol, ProtocolResponse["result"]>;
+function getSymbolGenerator(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]>;
+function* getSymbolGenerator(declaration: Declaration): Generator<ProtocolRequest, Symbol | undefined, ProtocolResponse["result"]> {
     const api = getNodeAPI(declaration);
     return api ? yield* api.getSymbol.gen(declaration) : undefined;
-};
+}
+getSymbol.gen = getSymbolGenerator;
 
 /** An independently retained source file and its disposable remote-lifetime lease. */
 export class RetainedSourceFile {
-    readonly sourceFile: SourceFile;
+    readonly sourceFile: Remote<SourceFile>;
     private readonly lease: number;
     private readonly onDispose: () => void;
     private disposed = false;
     private disposePromise: void | undefined;
 
-    constructor(sourceFile: SourceFile, lease: number, onDispose: () => void) {
+    constructor(sourceFile: Remote<SourceFile>, lease: number, onDispose: () => void) {
         this.sourceFile = sourceFile;
         this.lease = lease;
         this.onDispose = onDispose;
@@ -2946,21 +2966,21 @@ export class Program<Id extends ProjectId = ProjectId> implements FormatDiagnost
     }
 
     get getSourceFile(): {
-        (file: DocumentIdentifier): SourceFile | undefined;
-        gen(file: DocumentIdentifier): Generator<ProtocolRequest, SourceFile | undefined, ProtocolResponse["result"]>;
+        (file: DocumentIdentifier): Remote<SourceFile> | undefined;
+        gen(file: DocumentIdentifier): Generator<ProtocolRequest, Remote<SourceFile> | undefined, ProtocolResponse["result"]>;
     } {
         const owner = this;
         return cacheGeneratorMethod(
             owner,
             "getSourceFile",
-            function (file: DocumentIdentifier): SourceFile | undefined {
+            function (file: DocumentIdentifier): Remote<SourceFile> | undefined {
                 const fileName = resolveFileName(file);
                 const path = owner.toPath(fileName);
 
                 // Check if we already have a retained cache entry for this (snapshot, project) pair
                 const retained = owner.sourceFileCache.getRetained(path, owner.snapshotId, owner.project.id);
                 if (retained) {
-                    return retained as unknown as SourceFile;
+                    return retained as unknown as Remote<SourceFile>;
                 }
 
                 // Fetch from server
@@ -2975,16 +2995,16 @@ export class Program<Id extends ProjectId = ProjectId> implements FormatDiagnost
 
                 // Create a new RemoteSourceFile and cache it (set returns existing if hash matches)
                 const decoded = new RemoteSourceFile(binaryData, owner.decoder, owner.client.getTimingCollector(), owner.project.api);
-                return owner.sourceFileCache.set(decoded, owner.snapshotId, owner.project.id) as unknown as SourceFile;
+                return owner.sourceFileCache.set(decoded, owner.snapshotId, owner.project.id) as unknown as Remote<SourceFile>;
             },
-            function* (file: DocumentIdentifier): Generator<ProtocolRequest, SourceFile | undefined, ProtocolResponse["result"]> {
+            function* (file: DocumentIdentifier): Generator<ProtocolRequest, Remote<SourceFile> | undefined, ProtocolResponse["result"]> {
                 const fileName = resolveFileName(file);
                 const path = owner.toPath(fileName);
 
                 // Check if we already have a retained cache entry for this (snapshot, project) pair
                 const retained = owner.sourceFileCache.getRetained(path, owner.snapshotId, owner.project.id);
                 if (retained) {
-                    return retained as unknown as SourceFile;
+                    return retained as unknown as Remote<SourceFile>;
                 }
 
                 // Fetch from server
@@ -3001,7 +3021,7 @@ export class Program<Id extends ProjectId = ProjectId> implements FormatDiagnost
 
                 // Create a new RemoteSourceFile and cache it (set returns existing if hash matches)
                 const decoded = new RemoteSourceFile(binaryData, owner.decoder, owner.client.getTimingCollector(), owner.project.api);
-                return owner.sourceFileCache.set(decoded, owner.snapshotId, owner.project.id) as unknown as SourceFile;
+                return owner.sourceFileCache.set(decoded, owner.snapshotId, owner.project.id) as unknown as Remote<SourceFile>;
             },
         );
     }
@@ -6502,36 +6522,36 @@ export class NodeHandle<out T extends Node = Node> {
      * resolve through it, independently of any project.
      */
     get resolve(): {
-        (project?: Project | undefined): T | undefined;
-        gen(project?: Project | undefined): Generator<ProtocolRequest, T | undefined, ProtocolResponse["result"]>;
+        (project?: Project | undefined): Remote<T> | undefined;
+        gen(project?: Project | undefined): Generator<ProtocolRequest, Remote<T> | undefined, ProtocolResponse["result"]>;
     } {
         const owner = this;
         return cacheGeneratorMethod(
             owner,
             "resolve",
-            function (project: Project | undefined = owner.canonicalProject): T | undefined {
+            function (project: Project | undefined = owner.canonicalProject): Remote<T> | undefined {
                 if (owner.fileOwner) {
                     const sourceFile = owner.fileOwner.record.file ?? owner.fetchOwnerFile(owner.fileOwner);
-                    return sourceFile.getOrCreateNodeAtIndex(owner.index) as T | undefined;
+                    return sourceFile.getOrCreateNodeAtIndex(owner.index) as Remote<T> | undefined;
                 }
                 if (!project) throw new Error(`Node handle for '${owner.path}' has no project context`);
                 const sourceFile = project.program.getSourceFile(owner.path);
                 if (!sourceFile) {
                     return undefined;
                 }
-                return (sourceFile as unknown as RemoteSourceFile).getOrCreateNodeAtIndex(owner.index) as T | undefined;
+                return (sourceFile as unknown as RemoteSourceFile).getOrCreateNodeAtIndex(owner.index) as Remote<T> | undefined;
             },
-            function* (project: Project | undefined = owner.canonicalProject): Generator<ProtocolRequest, T | undefined, ProtocolResponse["result"]> {
+            function* (project: Project | undefined = owner.canonicalProject): Generator<ProtocolRequest, Remote<T> | undefined, ProtocolResponse["result"]> {
                 if (owner.fileOwner) {
                     const sourceFile = owner.fileOwner.record.file ?? (yield* owner.fetchOwnerFile.gen(owner.fileOwner));
-                    return sourceFile.getOrCreateNodeAtIndex(owner.index) as T | undefined;
+                    return sourceFile.getOrCreateNodeAtIndex(owner.index) as Remote<T> | undefined;
                 }
                 if (!project) throw new Error(`Node handle for '${owner.path}' has no project context`);
                 const sourceFile = yield* project.program.getSourceFile.gen(owner.path);
                 if (!sourceFile) {
                     return undefined;
                 }
-                return (sourceFile as unknown as RemoteSourceFile).getOrCreateNodeAtIndex(owner.index) as T | undefined;
+                return (sourceFile as unknown as RemoteSourceFile).getOrCreateNodeAtIndex(owner.index) as Remote<T> | undefined;
             },
         );
     }

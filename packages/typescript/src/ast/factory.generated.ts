@@ -264,6 +264,7 @@ import {
     getLastToken,
     getTokenPosOfNode,
 } from "./astnav.ts";
+import type { LocalNode } from "./remote.ts";
 import { cloneSourceFileData } from "./utils.ts";
 import {
     forEachChildOfJSDocParameterTag,
@@ -770,13 +771,13 @@ export function createNodeArray<T extends Node>(elements: readonly T[], pos: num
     return arr;
 }
 
-export function cloneNode<T extends Node>(node: T): T {
+export function cloneNode<T extends Node>(node: T): LocalNode<T> {
     const data = cloneNodeData(node);
     const clone = new NodeObject(node.kind, data);
     (clone as any).flags = node.flags;
     (clone as any).pos = node.pos;
     (clone as any).end = node.end;
-    return clone as unknown as T;
+    return clone as unknown as LocalNode<T>;
 }
 
 function cloneNodeData(node: Node): any {

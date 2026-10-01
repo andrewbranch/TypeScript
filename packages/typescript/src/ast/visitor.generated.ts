@@ -407,6 +407,7 @@ import {
     isVariableDeclaration,
     isVariableDeclarationList,
 } from "./is.ts";
+import type { LocalNode } from "./remote.ts";
 import {
     visitEachChildOfJSDocParameterTag,
     visitEachChildOfJSDocPropertyTag,
@@ -465,8 +466,8 @@ export function visitNode(node: Node | undefined, visitor: Visitor, test?: (node
  * - If the input node array is undefined, the output is undefined.
  * - If the visitor returns undefined for a node, that node is dropped from the result.
  */
-export function visitNodes<T extends Node>(nodes: NodeArray<T>, visitor: Visitor): NodeArray<T>;
-export function visitNodes<T extends Node>(nodes: NodeArray<T> | undefined, visitor: Visitor): NodeArray<T> | undefined;
+export function visitNodes<T extends Node>(nodes: NodeArray<T>, visitor: Visitor): NodeArray<LocalNode<T>>;
+export function visitNodes<T extends Node>(nodes: NodeArray<T> | undefined, visitor: Visitor): NodeArray<LocalNode<T>> | undefined;
 export function visitNodes(nodes: NodeArray<Node> | undefined, visitor: Visitor): NodeArray<Node> | undefined {
     if (nodes === undefined) return undefined;
     const updated = visitNodesArray(nodes, visitor);
@@ -476,8 +477,8 @@ export function visitNodes(nodes: NodeArray<Node> | undefined, visitor: Visitor)
     return createNodeArray(updated, nodes.pos, nodes.end);
 }
 
-export function visitNodesArray<T extends Node>(nodes: readonly T[], visitor: Visitor): readonly T[];
-export function visitNodesArray<T extends Node>(nodes: readonly T[] | undefined, visitor: Visitor): readonly T[] | undefined;
+export function visitNodesArray<T extends Node>(nodes: readonly T[], visitor: Visitor): readonly LocalNode<T>[];
+export function visitNodesArray<T extends Node>(nodes: readonly T[] | undefined, visitor: Visitor): readonly LocalNode<T>[] | undefined;
 export function visitNodesArray(nodes: readonly Node[] | undefined, visitor: Visitor): readonly Node[] | undefined {
     if (nodes === undefined) return undefined;
     let updated: Node[] | undefined;
@@ -503,8 +504,8 @@ export function visitNodesArray(nodes: readonly Node[] | undefined, visitor: Vis
  * @param visitor The callback used to visit each child.
  * @returns The original node if no children changed, or a new node with visited children.
  */
-export function visitEachChild<T extends Node>(node: T, visitor: Visitor): T;
-export function visitEachChild<T extends Node>(node: T | undefined, visitor: Visitor): T | undefined;
+export function visitEachChild<T extends Node>(node: T, visitor: Visitor): LocalNode<T>;
+export function visitEachChild<T extends Node>(node: T | undefined, visitor: Visitor): LocalNode<T> | undefined;
 export function visitEachChild(node: Node | undefined, visitor: Visitor): Node | undefined {
     if (node === undefined) return undefined;
     const fn = visitEachChildTable[node.kind];
