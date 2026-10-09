@@ -1,0 +1,186 @@
+API client investigation: recommendedTypeChecked
+
+Historical report from the original investigation. Artifacts are now packaged
+under temporary/api-client-perf; use README.md for current paths, portable
+commands, and the recommended agent plan. Profiles are compressed, and the
+original map trace is now profiles/baseline-v8.log.xz (losslessly re-encoded).
+The final paragraphs below describe repository status at investigation time,
+before the subsequent handoff commit.
+
+Workload
+--------
+1024 generated application-style TypeScript files, even import layout, native
+backend, automatic single-run inference disabled. This is the existing
+typescript-eslint performance benchmark, not a new microbenchmark.
+
+Compiler revision: 6ad8c56f9b5a9bb910046c56059296311adc24ba
+Runtime: Node v24.18.0, Go go1.27.1, darwin/arm64.
+Both the optimized native binary and JS client were built from this worktree.
+An import hook redirects the adapter's @typescript/native/unstable exports to
+packages/typescript/dist, and an API subclass supplies built/local/tsc.
+TYPESCRIPT_ESLINT_NATIVE_BINARY is intentionally unset: in this adapter its
+presence selects the separate Rust-compatible SDK, not this repository's SDK.
+
+The external adapter was rebuilt at 10:33:53 during this investigation.
+Final comparisons freeze its compiled output without changing its checkout.
+All final measurements share source digest:
+602fafa18e1525e2b6a9ee8e86ee8bac5febf6c597efee5389ce2ca30c5dff0a
+
+All measured alternatives and final profiles completed 1024 files with one
+intentional no-floating-promises diagnostic and zero fatal parser errors.
+Normalized diagnostic SHA-256:
+5406e856eeb54a865f64d9e7fc98114ce55627bd963e636b729293125f036955
+ESLint exit code 1 is expected; it is not accepted without checking diagnostics.
+
+Clean CPU profile
+-----------------
+clean-baseline.cpuprofile, summarized in clean-cpu-summary.txt:
+6846 ms sampled wall time.
+36.5% transport including blocking I/O, 36.2% typescript-eslint,
+11.7% API client, 5.4% main-thread GC, the remainder startup/Node/other.
+32.7% of all samples are in read(), so do not attribute transport's entire
+inclusive time to client CPU. Node CPU usage includes GC/helper threads, unlike
+the main-thread CPU sampling profile.
+
+Direct, instrumented measurements of the native JSON builtins across the
+workload: about 85-111 ms stringify and 216-233 ms parse. These runs are
+instrumented and are NOT the timing comparisons.
+
+Allocation sampling explicitly includes objects collected by minor and major
+GC. Default --heap-prof only describes surviving sampled allocations at exit
+and is not a sufficient allocation-throughput profile for this workload.
+Instrumented profiles add their own allocation traffic; compare API-specific
+stacks, not the raw whole-process total.
+
+Highest-confidence local opportunity
+-----------------------------------
+src/ast/astnav.ts:createChildren creates a fresh closure-heavy scanner per node.
+The same-source baseline sampled 870.4 MiB allocated in createScanner.
+A reentrancy-safe, per-source-file scanner pool reduced that to 4.2 MiB.
+The scanner pool is held in a WeakMap and checks scanners out of a stack;
+try/finally returns them, so nested calls do not share an in-use scanner.
+The public API, request pattern, and diagnostics are unchanged.
+
+Final timings: one warmup and five interleaved measurements per variant.
+Median wall times:
+baseline                         6.537 s
+scanner-pool                     6.423 s
+bound-methods                    6.699 s
+scanner-pool,bound-methods        6.621 s
+
+Scanner pooling is approximately 1.7% faster by these medians, not an
+order-of-magnitude end-to-end win. Timing is noisy on this shared machine.
+One baseline sample took 168.899 s with only 9.221 s parent CPU; another
+combined-candidate sample took 8.709 s. The raw samples are retained. Medians
+are reported rather than silently deleting outliers or using the invalid
+39-second baseline arithmetic mean. Peak RSS did not clearly improve.
+
+Facade evidence
+---------------
+53833 TypeObjects, 58132 Symbols, 21468 Signatures, 140112 NodeHandles.
+121606 lazy method installations in the final baseline; each installs both
+a sync and a generator function. Only 30993 NodeHandle.resolve installations.
+140112 node-handle parses correspond to 20656 unique textual handles and
+1054 unique handle paths. Owner/lifetime identity must be preserved if handles
+are interned; equal strings in different source-file versions are not enough.
+
+251791 getOrCreateType attempts create just 53833 TypeObjects. Roughly 79%
+of returned type records encounter an already-interned type. This quantifies
+an allocation opportunity in decoding/interning, not a request-batching claim.
+
+The map trace records 136 TypeObject maps, including initialization transitions.
+One recorded TypeObject layout has 51 in-object fields and a 432-byte instance
+size before accounting for referenced arrays/method functions.
+Do not interpret all map records as simultaneously used final object shapes.
+
+A facade experiment hoists sync/generator implementations and binds them to
+owners, preserving callable methods, detached calls, and .gen. Getter-site
+sampled allocations declined from 35.5 to 21.1 MiB, but no robust wall-time win
+appeared. A WeakMap sidecar method cache, a global parsed-handle cache, pooled
+Buffer allocations, and a decoded string-table cache also did not establish
+reliable standalone speedups. The global handle cache is not a shipping design:
+it deliberately lacks production ownership/disposal handling.
+
+Promising structural designs, not implemented production changes:
+* Keep facade headers small and stable; lazily allocate relationship caches.
+* Intern or lazily decode NodeHandles within the correct owner.
+* Avoid installing own methods in access-order-dependent shapes.
+* Consider separating generator entrypoints from ordinary prototype methods.
+  The current method.gen owner-binding contract forces per-owner callable
+  functions; replacing everything with ordinary shared methods breaks it.
+* Consider schema-driven decoding that consults the registry before allocating
+  a complete transient TypeResponse object or filling 51 facade slots.
+
+V8 evidence
+-----------
+frozen-ic-v8.log and frozen-deopts.txt contain the final frozen-workload evidence.
+The deoptigate core parser was used with a compatibility adapter for Node 24:
+JS code-creation tags, baseline/Maglev tier markers, IC timestamp columns,
+deopt-eager/deopt-lazy spellings, and file: URLs. Tier normalization is coarse;
+use the original log/trace for exact tier information.
+Raw line/column positions and deopt reasons were checked against the trace.
+
+Final results: 13 client deopt sites, 1760 client IC sites with state changes,
+109 client IC sites reaching megamorphic state.
+Representative client-facing sites: TypeObject.isUnionType/isIntersectionType
+reading flags, isTypeReference reading objectFlags, registry fetch paths,
+and AST getters reading view/_byteIndex/_sourceFile.
+Some constructor ICs read naturally heterogeneous JSON response shapes, so
+megamorphism alone is not proof of a bug or worthwhile optimization.
+There is no evidence of a runaway repeated-deoptimization loop. Stable shapes
+and allocation reduction are stronger leads than chasing warmup bailouts.
+
+Transport redesign
+------------------
+125761 requests; about 84.0 MiB outgoing payload and 100.3 MiB incoming payload,
+including about 16.3 MiB binary AST data. Ordinary JSON responses alone total
+about 84.0 MiB. The outer framing is already MessagePack, but checker payloads
+are still JSON strings.
+
+Examples retain the entire configured-project path in every request and many
+symbol references; textual node handles repeat long file paths. Source-file
+symbol references can repeat full descriptors. Bulk type responses repeatedly
+include already-known primitive/type definitions.
+
+Offline substitution estimate, not an implemented codec or performance result:
+replace project strings with numeric IDs and textual index.kind.path handles
+with numeric tuples, retaining the same fields and request pattern:
+JSON requests: 83.6 MiB -> 18.3 MiB
+JSON responses: 84.1 MiB -> 58.9 MiB
+This does not count definition-table overhead, ownership/invalidation metadata,
+or any extra savings from compact source-file descriptors.
+
+Recommended protocol experiment:
+versioned, schema-specific records with numeric method/project/file identities,
+typed node references, and definition/reference separation for interned types,
+symbols and signatures. Decode directly into the existing scoped registries,
+ideally without UTF-8 response strings or intermediate JSON objects. Preserve
+snapshot/project and exact source-file-incarnation ownership. Keep every
+request and server computation unchanged to isolate client codec cost.
+Do not assume a generic hand-written JavaScript MessagePack decoder beats V8's
+native JSON parser; the stronger motivation is eliminating redundancy and
+allocations rather than replacing one parser with another.
+
+Artifacts and reproduction
+--------------------------
+profile-loader.mjs / profile-api.mjs: current-client and frozen-adapter routing.
+prepare-experiments.mjs: generates load-time-only candidate implementations.
+measure-experiments.mjs: diagnostics and source fingerprints, timing, parent
+CPU and RSS. Frozen raw results are in frozen-results.json.
+telemetry.mjs: JSON timing, object/method counts, wire mix, allocation sampling.
+analyze-deopts.mjs: deoptigate adapter and streaming map analysis.
+summarize-profile.mjs / summarize-heap.mjs: readable summaries.
+
+From the session files directory:
+node prepare-experiments.mjs
+API_RESULTS_NAME=frozen-results node measure-experiments.mjs baseline scanner-pool bound-methods scanner-pool,bound-methods
+
+The original map trace is archived as baseline-v8.log.gz.
+
+Validation: npx hereby validate --api completed successfully, including 954
+passing API tests, compiler tests, lint (zero issues), and formatting.
+The repository was clean before and after validation.
+
+Profiles, protocol estimates, and prototype implementations are retained only
+in the session artifacts. No repository, transport server, or adapter source
+was changed. Nothing was committed or pushed.

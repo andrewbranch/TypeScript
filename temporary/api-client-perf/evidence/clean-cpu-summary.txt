@@ -1,0 +1,165 @@
+Sampled wall time: 6846.2 ms
+
+Categories
+   2500.3 ms  36.52% Transport (includes blocking I/O)
+   2474.8 ms  36.15% typescript-eslint
+    803.1 ms  11.73% API client
+    497.4 ms   7.27% Other
+    370.2 ms   5.41% GC
+    200.3 ms   2.93% Node builtins
+
+Self
+   2238.2 ms  32.69% read :0
+    370.2 ms   5.41% (garbage collector) :0
+    203.3 ms   2.97% writeBuffer :0
+    167.5 ms   2.45% (anonymous) file:///Users/andrew/Developer/eg/typescript-eslint/performance/node_modules/esquery/dist/esquery.min.js:1
+    151.7 ms   2.22% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:47
+    116.8 ms   1.71% (program) :0
+    116.3 ms   1.70% getMemoEntry file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeCheckerAdapter.js:415
+    111.5 ms   1.63% (idle) :0
+     93.5 ms   1.37% populateGlobalsFromLib file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/referencer/Referencer.js:30
+     80.3 ms   1.17% defineVariable file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/scope/ScopeBase.js:246
+     71.8 ms   1.05% (anonymous) :0
+     64.7 ms   0.95% get file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeNodeAdapter.js:452
+     58.2 ms   0.85% getChildren file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeNodeAdapter.js:248
+     56.6 ms   0.83% batchRequests file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:61
+     46.2 ms   0.67% visitChildren file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/referencer/VisitorBase.js:24
+     44.6 ms   0.65% traverseSync file:///Users/andrew/Developer/eg/typescript-eslint/performance/node_modules/eslint/lib/linter/source-code-traverser.js:269
+     43.5 ms   0.63% parseNodeHandleFromCompiler file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:404
+     39.6 ms   0.58% convertNode file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/convert.js:481
+     35.8 ms   0.52% visit file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/referencer/VisitorBase.js:53
+     35.3 ms   0.52% stat :0
+     34.5 ms   0.50% wrap file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeTypeAdapter.js:124
+     31.0 ms   0.45% _traverse file:///Users/andrew/Developer/eg/typescript-eslint/performance/node_modules/eslint/lib/shared/traverser.js:130
+     30.5 ms   0.44% convertToken file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/node-utils.js:470
+     29.5 ms   0.43% readFileUtf8 :0
+     28.6 ms   0.42% compileFunctionForCJSLoader :0
+     26.7 ms   0.39% wrapSafe node:internal/modules/cjs/loader:1762
+     26.3 ms   0.38% createScanner file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:734
+     26.0 ms   0.38% adaptArray file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeNodeAdapter.js:215
+     25.1 ms   0.37% createNode file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/convert.js:2266
+     24.4 ms   0.36% create file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/utils/dist/eslint-utils/RuleCreator.js:37
+     22.6 ms   0.33% decodeUTF8 :0
+     22.5 ms   0.33% VariableBase file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/variable/VariableBase.js:42
+     22.2 ms   0.32% iterateTokens file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/node_modules/.pnpm/ts-api-utils@2.5.0_@typescript+typescript6@6.0.2/node_modules/ts-api-utils/lib/index.cjs:15
+     21.5 ms   0.31% collectUnusedVariables file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/eslint-plugin/dist/util/collectUnusedVariables.js:95
+     21.4 ms   0.31% getOrCreateToken file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:519
+     19.9 ms   0.29% readBin file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:370
+     19.4 ms   0.28% scan file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:1317
+     19.2 ms   0.28% walk file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/node-utils.js:528
+     18.8 ms   0.27% ruleErrorHandler file:///Users/andrew/Developer/eg/typescript-eslint/performance/node_modules/eslint/lib/linter/linter.js:643
+     18.5 ms   0.27% readClassic file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeNodeAdapter.js:379
+     17.7 ms   0.26% addDeclaredGlobals file:///Users/andrew/Developer/eg/typescript-eslint/performance/node_modules/eslint/lib/languages/js/source-code/source-code.js:206
+     17.7 ms   0.26% runRules file:///Users/andrew/Developer/eg/typescript-eslint/performance/node_modules/eslint/lib/linter/linter.js:523
+     17.5 ms   0.25% acquire file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/ScopeManager.js:73
+     17.4 ms   0.25% getLineAndCharacterOfPosition file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:345
+     16.5 ms   0.24% skipTrivia file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:359
+     16.5 ms   0.24% iterateComments file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/node_modules/.pnpm/ts-api-utils@2.5.0_@typescript+typescript6@6.0.2/node_modules/ts-api-utils/lib/index.cjs:44
+     16.3 ms   0.24% get file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/scope-manager/dist/variable/index.js:7
+     16.2 ms   0.24% getOrCreateRecord file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sourceFileCache.js:71
+     16.2 ms   0.24% get file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeTypeAdapter.js:112
+     16.0 ms   0.23% wrapNode file:///Users/andrew/Developer/eg/typescript-eslint/typescript-eslint/packages/typescript-estree/dist/native/nativeNodeAdapter.js:514
+
+Inclusive client
+   2599.8 ms  37.97% requestBytesSync file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:216
+   2335.7 ms  34.12% readTuple file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:347
+   2240.8 ms  32.73% fillReadBuffer file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:427
+   2084.7 ms  30.45% readByte file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:401
+   1674.7 ms  24.46% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:47
+   1538.6 ms  22.47% requestSync file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:162
+    729.0 ms  10.65% batch file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:155
+    727.8 ms  10.63% executeRequestGenerators file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:54
+    640.1 ms   9.35% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:156
+    638.8 ms   9.33% batchRequests file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:61
+    609.6 ms   8.90% getTypeAtLocation file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3051
+    308.9 ms   4.51% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1546
+    306.4 ms   4.48% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4813
+    249.2 ms   3.64% writeTuple file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:287
+    205.7 ms   3.00% writeAllBuf file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:493
+    185.3 ms   2.71% createSnapshot file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:430
+    179.8 ms   2.63% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4791
+    173.0 ms   2.53% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1244
+    136.0 ms   1.99% getChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:541
+    136.0 ms   1.99% getChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:302
+    123.5 ms   1.80% createChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:567
+    122.5 ms   1.79% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4777
+    121.8 ms   1.78% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4769
+    121.3 ms   1.77% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1490
+    120.3 ms   1.76% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1294
+    118.4 ms   1.73% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1526
+    111.6 ms   1.63% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1362
+    111.6 ms   1.63% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4971
+    101.9 ms   1.49% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:5380
+     93.7 ms   1.37% forEachChild file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:196
+     89.8 ms   1.31% readBin file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:370
+     89.6 ms   1.31% getOrCreateSymbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1182
+     83.7 ms   1.22% getSymbolAtLocation file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:2826
+     73.2 ms   1.07% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1414
+     73.2 ms   1.07% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:5356
+     71.6 ms   1.05% advanceGenerator file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:99
+     71.1 ms   1.04% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3803
+     69.5 ms   1.01% getString file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:311
+     69.5 ms   1.01% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1444
+     68.6 ms   1.00% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4901
+     62.4 ms   0.91% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3253
+     62.3 ms   0.91% readExact file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:407
+     58.4 ms   0.85% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1959
+     57.2 ms   0.84% decode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/wtf8.js:100
+     55.7 ms   0.81% addSyntheticNodes file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:606
+     51.0 ms   0.74% parseNodeHandleFromCompiler file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:404
+     50.1 ms   0.73% apiRequestBinary file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:89
+     47.4 ms   0.69% Symbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4453
+     43.8 ms   0.64% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1280
+     43.6 ms   0.64% get text file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:831
+
+Self client
+    151.7 ms   2.22% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:47
+     56.6 ms   0.83% batchRequests file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:61
+     43.5 ms   0.63% parseNodeHandleFromCompiler file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:404
+     26.3 ms   0.38% createScanner file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:734
+     21.4 ms   0.31% getOrCreateToken file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:519
+     19.9 ms   0.29% readBin file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:370
+     19.4 ms   0.28% scan file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:1317
+     17.4 ms   0.25% getLineAndCharacterOfPosition file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:345
+     16.5 ms   0.24% skipTrivia file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:359
+     16.2 ms   0.24% getOrCreateRecord file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sourceFileCache.js:71
+     15.5 ms   0.23% cacheGeneratorMethod file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:1
+     13.9 ms   0.20% forEachChild file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:196
+     12.6 ms   0.18% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1490
+     12.5 ms   0.18% RemoteNodeList file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:41
+     12.5 ms   0.18% getTypeAtLocation file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3051
+     12.2 ms   0.18% getString file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:311
+     11.4 ms   0.17% TypeObject file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4669
+     11.3 ms   0.16% addGenerator file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:154
+     11.3 ms   0.16% getOrCreateType file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1208
+     11.2 ms   0.16% getOrCreateSymbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1182
+     10.1 ms   0.15% advanceGenerator file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:99
+     10.1 ms   0.15% processNodes file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:587
+     10.0 ms   0.15% Symbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4453
+      8.8 ms   0.13% getChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:541
+      8.8 ms   0.13% getSymbolAtLocation file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:2826
+      7.5 ms   0.11% getTokenPosOfNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:263
+      7.5 ms   0.11% get jsDoc file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:253
+      7.5 ms   0.11% getOrCreateSymbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1139
+      6.3 ms   0.09% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3058
+      6.3 ms   0.09% get getCallSignatures file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4811
+      6.2 ms   0.09% get kind file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.infrastructure.js:67
+      6.1 ms   0.09% requestBytesSync file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:216
+      6.1 ms   0.09% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1959
+      5.1 ms   0.07% setWithRef file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sourceFileCache.js:142
+      5.1 ms   0.07% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1444
+      5.1 ms   0.07% readExact file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:407
+      5.0 ms   0.07% hasRelativePathSegment file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/path.js:462
+      5.0 ms   0.07% decode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/wtf8.js:100
+      5.0 ms   0.07% createSyntaxListNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:628
+      5.0 ms   0.07% getNamedChild file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:340
+      5.0 ms   0.07% get pos file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.infrastructure.js:70
+      5.0 ms   0.07% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1244
+      5.0 ms   0.07% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3261
+      5.0 ms   0.07% writeTuple file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:287
+      4.7 ms   0.07% retainRecordForSnapshot file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sourceFileCache.js:167
+      3.8 ms   0.06% createChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:567
+      3.8 ms   0.06% readTuple file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:347
+      3.8 ms   0.06% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3914
+      3.8 ms   0.06% addSyntheticNodes file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:606
+      3.8 ms   0.06% getMethodBuf file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:208

@@ -1,0 +1,178 @@
+[
+    {
+        "variant": "baseline",
+        "index": "warmup",
+        "wallMs": 7080.574624999999,
+        "userMs": 6389.224,
+        "systemMs": 1041.749,
+        "maxRSSMiB": 1276.90625,
+        "heapUsedMiB": 986.6744613647461,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "scanner-pool",
+        "index": "warmup",
+        "wallMs": 6510.9905420000005,
+        "userMs": 6154.468,
+        "systemMs": 939.119,
+        "maxRSSMiB": 1270.984375,
+        "heapUsedMiB": 996.8572998046875,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "bound-methods",
+        "index": "warmup",
+        "wallMs": 6500.263041999999,
+        "userMs": 6105.448,
+        "systemMs": 909.631,
+        "maxRSSMiB": 1256.078125,
+        "heapUsedMiB": 994.3193054199219,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "scanner-pool,bound-methods",
+        "index": "warmup",
+        "wallMs": 6451.508208000003,
+        "userMs": 6081.57,
+        "systemMs": 897.882,
+        "maxRSSMiB": 1260.328125,
+        "heapUsedMiB": 974.6861190795898,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "pooled-buffers",
+        "index": "warmup",
+        "wallMs": 6483.179457999999,
+        "userMs": 6095.242,
+        "systemMs": 940.033,
+        "maxRSSMiB": 1317.546875,
+        "heapUsedMiB": 1023.8253784179688,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "handle-cache",
+        "index": "warmup",
+        "wallMs": 6490.921541999996,
+        "userMs": 6129.165,
+        "systemMs": 926.621,
+        "maxRSSMiB": 1255.1875,
+        "heapUsedMiB": 956.8737564086914,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "string-cache",
+        "index": "warmup",
+        "wallMs": 6477.402750000001,
+        "userMs": 6091.601,
+        "systemMs": 953.56,
+        "maxRSSMiB": 1287.671875,
+        "heapUsedMiB": 1018.894905090332,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "method-sidecar",
+        "index": "warmup",
+        "wallMs": 6570.572333000004,
+        "userMs": 6194.184,
+        "systemMs": 931.273,
+        "maxRSSMiB": 1301,
+        "heapUsedMiB": 1036.722640991211,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "baseline",
+        "index": 0,
+        "wallMs": 6632.357708000003,
+        "userMs": 6134.705,
+        "systemMs": 937.182,
+        "maxRSSMiB": 1282.90625,
+        "heapUsedMiB": 1010.270866394043,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "scanner-pool",
+        "index": 0,
+        "wallMs": 6475.583541999993,
+        "userMs": 6093.184,
+        "systemMs": 920.225,
+        "maxRSSMiB": 1268.96875,
+        "heapUsedMiB": 998.9528961181641,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "bound-methods",
+        "index": 0,
+        "wallMs": 6558.788249999998,
+        "userMs": 6156.422,
+        "systemMs": 920.269,
+        "maxRSSMiB": 1260.109375,
+        "heapUsedMiB": 963.0798950195312,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "scanner-pool,bound-methods",
+        "index": 0,
+        "wallMs": 6453.430917000005,
+        "userMs": 6069.125,
+        "systemMs": 926.932,
+        "maxRSSMiB": 1260.28125,
+        "heapUsedMiB": 971.4406127929688,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "pooled-buffers",
+        "index": 0,
+        "wallMs": 6462.128375,
+        "userMs": 6086.482,
+        "systemMs": 914.195,
+        "maxRSSMiB": 1312.5625,
+        "heapUsedMiB": 1011.0055999755859,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "handle-cache",
+        "index": 0,
+        "wallMs": 6507.476542000004,
+        "userMs": 6121.272,
+        "systemMs": 912.422,
+        "maxRSSMiB": 1268.609375,
+        "heapUsedMiB": 1005.793571472168,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "string-cache",
+        "index": 0,
+        "wallMs": 6460.693417000002,
+        "userMs": 6125.641,
+        "systemMs": 926.374,
+        "maxRSSMiB": 1270.078125,
+        "heapUsedMiB": 984.5827102661133,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    },
+    {
+        "variant": "method-sidecar",
+        "index": 0,
+        "wallMs": 6500.7405,
+        "userMs": 6201.989,
+        "systemMs": 932.863,
+        "maxRSSMiB": 1286.28125,
+        "heapUsedMiB": 1017.8506469726562,
+        "digest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+        "sourceDigest": "8699a630c97c3b9d5dfd1f6d8e2b8846b570b8b08c110e6c8ec0787a59d7cdd7"
+    }
+]

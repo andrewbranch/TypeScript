@@ -1,0 +1,14 @@
+{
+    "originalLoadedModules": 626,
+    "portableLoadedModules": 627,
+    "changedOriginalModules": [
+        "fixture/packages/typescript-estree/package.json",
+        "fixture/packages/parser/package.json",
+        "fixture/packages/eslint-plugin/package.json"
+    ],
+    "extraModules": [
+        "fixture/packages/eslint-plugin/node_modules/ignore/index.js"
+    ],
+    "originalRelativeDiagnosticDigest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5",
+    "portableRelativeDiagnosticDigest": "3ea3297381a0204a6c9ef1372882074d1c86ed29c4487c0d4401360b9c93fdd5"
+}

@@ -1,0 +1,117 @@
+Sampled bytes 6967676616
+
+Self
+   869.76 MiB  13.09% createScanner file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:735
+   402.39 MiB   6.06% set :0
+   247.51 MiB   3.72% ESLintScopeVariable /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/scope-manager/dist/variable/ESLintScopeVariable.js:9
+   217.46 MiB   3.27% iterateComments /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/ts-api-utils/lib/index.cjs:44
+   189.34 MiB   2.85% VariableBase /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/scope-manager/dist/variable/VariableBase.js:42
+   176.12 MiB   2.65% (anonymous) /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/esquery/dist/esquery.min.js:1
+   161.51 MiB   2.43% jsonStringify file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/scripts/telemetry.mjs:59
+   155.32 MiB   2.34% next :0
+   152.74 MiB   2.30% Set :0
+   139.57 MiB   2.10% populateGlobalsFromLib /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/scope-manager/dist/referencer/Referencer.js:30
+   135.73 MiB   2.04% walk /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/typescript-estree/dist/node-utils.js:528
+   132.80 MiB   2.00% _traverse /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/eslint/lib/shared/traverser.js:130
+   126.33 MiB   1.90% visitChildren /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/scope-manager/dist/referencer/VisitorBase.js:24
+   116.29 MiB   1.75% createNode /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/typescript-estree/dist/convert.js:2266
+   103.85 MiB   1.56% Map :0
+    99.04 MiB   1.49% push :0
+    96.25 MiB   1.45% traverseSync /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/eslint/lib/linter/source-code-traverser.js:269
+    93.49 MiB   1.41% resolve node:path:1245
+    92.67 MiB   1.39% processCodePathToEnter /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/eslint/lib/linter/code-path-analysis/code-path-analyzer.js:392
+    85.25 MiB   1.28% getString file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:312
+    77.81 MiB   1.17% slice :0
+    66.25 MiB   1.00% convertNode /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/typescript-estree/dist/convert.js:481
+    62.43 MiB   0.94% decode node:internal/encoding:482
+    61.42 MiB   0.92% getLineAndCharacterOfPosition file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:346
+    59.55 MiB   0.90% wrapNode /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/typescript-estree/dist/native/nativeNodeAdapter.js:514
+    57.71 MiB   0.87% toString node:buffer:908
+    53.04 MiB   0.80% run /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/p-limit/index.js:20
+    50.04 MiB   0.75% readBin file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:371
+    49.95 MiB   0.75% processCodePathToExit /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/eslint/lib/linter/code-path-analysis/code-path-analyzer.js:547
+    46.44 MiB   0.70% jsonParse file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/scripts/telemetry.mjs:51
+    46.07 MiB   0.69% isUsedVariable /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/eslint-plugin/dist/util/collectUnusedVariables.js:341
+    45.79 MiB   0.69% enqueue /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/p-limit/index.js:34
+    45.48 MiB   0.68% createChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:568
+    44.71 MiB   0.67% flatMap :0
+    43.86 MiB   0.66% createIndexMap /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/eslint/lib/languages/js/source-code/token-store/index.js:36
+    43.52 MiB   0.65% testElement /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/p-locate/index.js:12
+    43.33 MiB   0.65% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:48
+    38.05 MiB   0.57% callSync /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/node_modules/eslint/lib/linter/source-code-visitor.js:74
+    36.56 MiB   0.55% getChildren /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/typescript-estree/dist/native/nativeNodeAdapter.js:248
+    36.37 MiB   0.55% (anonymous) /Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/temporary/api-client-perf/runtime/packages/typescript-estree/dist/native/nativeNodeAdapter.js:276
+
+Self client
+   869.76 MiB  13.09% createScanner file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:735
+    85.25 MiB   1.28% getString file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:312
+    61.42 MiB   0.92% getLineAndCharacterOfPosition file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:346
+    50.04 MiB   0.75% readBin file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:371
+    45.48 MiB   0.68% createChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:568
+    43.33 MiB   0.65% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:48
+    33.00 MiB   0.50% processNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:578
+    26.27 MiB   0.40% batchRequests file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:62
+    23.75 MiB   0.36% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:107
+    19.89 MiB   0.30% parseNodeHandleFromCompiler file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:405
+    19.84 MiB   0.30% createSyntaxListNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:629
+    16.07 MiB   0.24% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3245
+    15.35 MiB   0.23% RemoteNodeList file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:42
+    14.73 MiB   0.22% Symbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4457
+    12.61 MiB   0.19% getOrCreateSymbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1183
+    12.19 MiB   0.18% addGenerator file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:156
+    10.80 MiB   0.16% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1493
+    10.20 MiB   0.15% get resolve file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4395
+     9.95 MiB   0.15% processNodes file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:588
+     9.16 MiB   0.14% TypeObject file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4674
+     8.89 MiB   0.13% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:8
+     8.64 MiB   0.13% RemoteNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:193
+     8.49 MiB   0.13% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3061
+     8.32 MiB   0.13% get getCallSignatures file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4817
+     8.05 MiB   0.12% executeRequestGenerators file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:56
+     7.36 MiB   0.11% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1447
+     7.10 MiB   0.11% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3059
+     6.98 MiB   0.11% addSyntheticNodes file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:607
+     6.88 MiB   0.10% writeAllBuf file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:494
+     6.64 MiB   0.10% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:5365
+     6.13 MiB   0.09% getOrCreateType file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1209
+     5.96 MiB   0.09% getSymbolAtLocation file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:2829
+     5.16 MiB   0.08% get id file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:190
+     4.95 MiB   0.07% getChildAtOrder file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:353
+     4.88 MiB   0.07% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3110
+     4.32 MiB   0.06% get getParameters file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:5361
+     4.19 MiB   0.06% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3264
+     4.13 MiB   0.06% scan file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:1318
+     3.94 MiB   0.06% get getSymbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4773
+     3.66 MiB   0.06% getNodeId file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:449
+
+Inclusive client
+  1033.11 MiB  15.55% createChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:568
+   869.76 MiB  13.09% createScanner file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/scanner.js:735
+   237.81 MiB   3.58% batch file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:156
+   236.81 MiB   3.56% executeRequestGenerators file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:56
+   217.18 MiB   3.27% apiRequest file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:48
+   180.56 MiB   2.72% getTypeAtLocation file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3054
+   151.11 MiB   2.27% getString file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:312
+   116.05 MiB   1.75% batchRequests file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/client.js:62
+   114.88 MiB   1.73% forEachChild file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:197
+    84.63 MiB   1.27% startGroup file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:201
+    81.00 MiB   1.22% addGenerator file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/generatorSupport.js:156
+    69.14 MiB   1.04% processNodes file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:588
+    66.26 MiB   1.00% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4783
+    66.26 MiB   1.00% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1493
+    65.72 MiB   0.99% requestBytesSync file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:217
+    63.17 MiB   0.95% getOrCreateSymbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1183
+    62.91 MiB   0.95% getLineAndCharacterOfPosition file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.js:346
+    60.52 MiB   0.91% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3059
+    52.48 MiB   0.79% readBin file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/syncChannel.js:371
+    51.68 MiB   0.78% get text file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:832
+    42.18 MiB   0.63% processNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:578
+    41.72 MiB   0.63% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:3245
+    39.75 MiB   0.60% createSyntaxListNode file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:629
+    39.41 MiB   0.59% getChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/ast/astnav.js:542
+    38.40 MiB   0.58% getChildren file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:303
+    34.98 MiB   0.53% Symbol file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4457
+    32.07 MiB   0.48% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:107
+    30.42 MiB   0.46% get id file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/node/node.generated.js:190
+    27.37 MiB   0.41% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:1499
+    26.85 MiB   0.40% (anonymous) file:///Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/packages/typescript/dist/api/sync/api.js:4775

@@ -1,0 +1,310 @@
+{
+    "wallMs": 9108.486625,
+    "cpu": {
+        "user": 8330796,
+        "system": 1585323
+    },
+    "memory": {
+        "rss": 1450688512,
+        "heapTotal": 1240121344,
+        "heapUsed": 675560760,
+        "external": 20519421,
+        "arrayBuffers": 18162165
+    },
+    "resourceUsage": {
+        "userCPUTime": 8330831,
+        "systemCPUTime": 1585342,
+        "maxRSS": 1423216,
+        "sharedMemorySize": 0,
+        "unsharedDataSize": 0,
+        "unsharedStackSize": 0,
+        "minorPageFault": 89945,
+        "majorPageFault": 82,
+        "swappedOut": 0,
+        "fsRead": 0,
+        "fsWrite": 0,
+        "ipcSent": 125761,
+        "ipcReceived": 125857,
+        "signalsCount": 0,
+        "voluntaryContextSwitches": 125762,
+        "involuntaryContextSwitches": 63130
+    },
+    "counters": {},
+    "uniqueHandles": 0,
+    "uniqueHandlePaths": 0,
+    "methods": {},
+    "wire": {
+        "batchRequests": {
+            "calls": 4294,
+            "requestBytes": 35656729,
+            "responseBytes": 22886210,
+            "maxResponseBytes": 25607,
+            "requestExample": "{\"requests\":[{\"method\":\"getContextualType\",\"params\":{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"location\":\"35.212./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}},{\"method\":\"getContextualType\",\"params\":{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"location\":\"38.79./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}},{\"method\":\"getContextualType\",\"params\":{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"location\":\"39.228./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}}]}",
+            "responseExample": "{\"responses\":[{\"method\":\"getContextualType\",\"result\":{\"id\":104,\"flags\":134217728,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false}},{\"method\":\"getContextualType\",\"result\":{\"id\":15,\"flags\":64,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"number\"}},{\"method\":\"getContextualType\",\"result\":{\"id\":15,\"flags\":64,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"number\"}}]}"
+        },
+        "getPropertiesOfType": {
+            "calls": 1228,
+            "requestBytes": 228370,
+            "responseBytes": 16069681,
+            "maxResponseBytes": 37187,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":142}",
+            "responseExample": "[{\"reference\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":496},\"name\":\"length\",\"flags\":33554436,\"checkFlags\":1,\"declarations\":[\"5146.173./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"],\"valueDeclaration\":\"5146.173./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\",\"parent\":{\"id\":556,\"file\":\"164\"}},{\"reference\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":536},\"name\":\"toString\",\"flags\":33562624,\"checkFlags\":1,\"declarations\":[\"5152.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"],\"valueDeclaration\":\"5152.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\",\"parent\":{\"id\":556,\"file\":\"164\"}},{\"reference\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":504},\"name\":\"toLocaleString\",\"flags\":33562624,\"checkFlags\":1,\"declarations\":[\"5159.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\",\"196.175./users/andrew/developer/micros"
+        },
+        "getTypeAtLocations": {
+            "calls": 1024,
+            "requestBytes": 21830602,
+            "responseBytes": 14185791,
+            "maxResponseBytes": 37652,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"locations\":[\"11.264./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"29.215./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"30.213./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"31.79./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"35.212./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"39.228./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"40.213./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"41.79./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"44.",
+            "responseExample": "[{\"id\":97,\"flags\":1048576,\"objectFlags\":16,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":419,\"file\":\"142\"}},{\"id\":96,\"flags\":1048576,\"objectFlags\":536870916,\"isTupleType\":false,\"value\":null,\"target\":93,\"isThisType\":false,\"symbol\":{\"id\":414}},{\"id\":90,\"flags\":1048576,\"objectFlags\":2097168,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":418,\"file\":\"151\"}},{\"id\":86,\"flags\":1048576,\"objectFlags\":2097154,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":420}},{\"id\":111,\"flags\":1048576,\"objectFlags\":2236560,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":431,\"file\":\"142\"}},{\"id\":15,\"flags\":64,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"number\"},{\"id\":15,\"flags\":64,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"number\"},{\"id\":14,\"flags\":32,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"string\"},{\"id\":52,\"flags\":2048,\"objectFlags\":0,\"isTupleType\":false,\"value\":0,\"freshType\":109,\"regularType\":52,\"isThisType\":false}]"
+        },
+        "getSourceFile": {
+            "calls": 699,
+            "requestBytes": 254896,
+            "responseBytes": 10829382,
+            "maxResponseBytes": 889262,
+            "requestExample": "",
+            "responseExample": "<binary>"
+        },
+        "getSymbolOfType": {
+            "calls": 6715,
+            "requestBytes": 1275649,
+            "responseBytes": 6349427,
+            "maxResponseBytes": 1608,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"objectId\":90}",
+            "responseExample": "{\"reference\":{\"kind\":0,\"file\":{\"fileName\":\"/Users/andrew/Developer/microsoft/TypeScript.worktrees/api-client-perf/built/local/lib.es2015.promise.d.ts\",\"path\":\"/users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es2015.promise.d.ts\",\"contentHash\":\"4c2761daba7f17141c25baa0821ac5da\",\"parseOptionsKey\":\"0\",\"scriptKind\":3,\"nodeId\":\"151\"},\"id\":418},\"name\":\"resolve\",\"flags\":8192,\"checkFlags\":0,\"declarations\":[\"184.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es2015.promise.d.ts\",\"199.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es2015.promise.d.ts\",\"230.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es2015.promise.d.ts\"],\"valueDeclaration\":\"184.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es2015.promise.d.ts\",\"parent\":{\"id\":449,\"file\":\"151\"}}"
+        },
+        "getCachedSourceFile": {
+            "calls": 352,
+            "requestBytes": 178607,
+            "responseBytes": 6224650,
+            "maxResponseBytes": 92886,
+            "requestExample": "",
+            "responseExample": "<binary>"
+        },
+        "getParametersOfSignature": {
+            "calls": 4711,
+            "requestBytes": 893739,
+            "responseBytes": 5125580,
+            "maxResponseBytes": 4548,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"objectId\":11}",
+            "responseExample": "[{\"reference\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":443},\"name\":\"onfulfilled\",\"flags\":33554433,\"checkFlags\":1,\"declarations\":[\"6320.171./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"],\"valueDeclaration\":\"6320.171./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"},{\"reference\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":445},\"name\":\"onrejected\",\"flags\":33554433,\"checkFlags\":1,\"declarations\":[\"6344.171./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"],\"valueDeclaration\":\"6344.171./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"}]"
+        },
+        "getSymbolAtLocation": {
+            "calls": 4901,
+            "requestBytes": 1855195,
+            "responseBytes": 4946916,
+            "maxResponseBytes": 1152,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"location\":\"41.79./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}",
+            "responseExample": "{\"reference\":{\"kind\":0,\"file\":{\"fileName\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"path\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"contentHash\":\"b974700dbc9ac12cdbd74ab58ccb0c5b\",\"parseOptionsKey\":\"2\",\"scriptKind\":3,\"nodeId\":\"142\"},\"id\":424},\"name\":\"prefix\",\"flags\":1,\"checkFlags\":0,\"declarations\":[\"17.171./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"],\"valueDeclaration\":\"17.171./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}"
+        },
+        "getSignaturesOfType": {
+            "calls": 25165,
+            "requestBytes": 4906557,
+            "responseBytes": 4413361,
+            "maxResponseBytes": 1038,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":114,\"kind\":0}",
+            "responseExample": "[{\"id\":11,\"flags\":0,\"declaration\":\"6309.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\",\"typeParameters\":[117,118],\"parameters\":[{\"id\":443},{\"id\":445}],\"target\":10}]"
+        },
+        "getPropertyOfType": {
+            "calls": 12267,
+            "requestBytes": 2458114,
+            "responseBytes": 4295243,
+            "maxResponseBytes": 1188,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":96,\"name\":\"then\"}",
+            "responseExample": "{\"reference\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":435},\"name\":\"then\",\"flags\":33562624,\"checkFlags\":1,\"declarations\":[\"6309.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"],\"valueDeclaration\":\"6309.175./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\",\"parent\":{\"id\":441,\"file\":\"164\"}}"
+        },
+        "getTypeAtLocation": {
+            "calls": 16592,
+            "requestBytes": 6287922,
+            "responseBytes": 2151919,
+            "maxResponseBytes": 275,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"location\":\"28.225./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}",
+            "responseExample": "{\"id\":23,\"flags\":16,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"void\"}"
+        },
+        "getTypesOfType": {
+            "calls": 6759,
+            "requestBytes": 1284032,
+            "responseBytes": 2131106,
+            "maxResponseBytes": 920,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"objectId\":122}",
+            "responseExample": "[{\"id\":10,\"flags\":4,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"undefined\"},{\"id\":13,\"flags\":8,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"null\"},{\"id\":121,\"flags\":1048576,\"objectFlags\":1572944,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":446,\"file\":\"164\"}}]"
+        },
+        "getReturnTypeOfSignature": {
+            "calls": 9600,
+            "requestBytes": 1821290,
+            "responseBytes": 1162100,
+            "maxResponseBytes": 169,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"objectId\":14}",
+            "responseExample": "{\"id\":99,\"flags\":1048576,\"objectFlags\":536870916,\"isTupleType\":false,\"value\":null,\"target\":93,\"isThisType\":false,\"symbol\":{\"id\":414}}"
+        },
+        "getNonMissingTypeOfSymbol": {
+            "calls": 7180,
+            "requestBytes": 3050937,
+            "responseBytes": 895019,
+            "maxResponseBytes": 161,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"symbol\":{\"kind\":1,\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"id\":435}}",
+            "responseExample": "{\"id\":114,\"flags\":1048576,\"objectFlags\":524368,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":434,\"file\":\"164\"}}"
+        },
+        "getTypeArguments": {
+            "calls": 3882,
+            "requestBytes": 721977,
+            "responseBytes": 631490,
+            "maxResponseBytes": 287,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":161}",
+            "responseExample": "[{\"id\":147,\"flags\":1048576,\"objectFlags\":2236560,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":577,\"file\":\"14874\"}}]"
+        },
+        "getApparentType": {
+            "calls": 4910,
+            "requestBytes": 932782,
+            "responseBytes": 588306,
+            "maxResponseBytes": 277,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"objectId\":23}",
+            "responseExample": "{\"id\":23,\"flags\":16,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"void\"}"
+        },
+        "getAwaitedType": {
+            "calls": 3678,
+            "requestBytes": 684016,
+            "responseBytes": 511604,
+            "maxResponseBytes": 173,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":99}",
+            "responseExample": "{\"id\":98,\"flags\":1048576,\"objectFlags\":2621442,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":451,\"file\":\"142\"}}"
+        },
+        "getContextualTypeForArgument": {
+            "calls": 4082,
+            "requestBytes": 1591524,
+            "responseBytes": 437184,
+            "maxResponseBytes": 138,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"location\":\"122.215./users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested1/index.ts\",\"index\":1}",
+            "responseExample": "{\"id\":1,\"flags\":1,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"any\"}"
+        },
+        "getBaseConstraintOfType": {
+            "calls": 3886,
+            "requestBytes": 722707,
+            "responseBytes": 351107,
+            "maxResponseBytes": 230,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":21}",
+            "responseExample": "{\"id\":21,\"flags\":134217984,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false}"
+        },
+        "getSourceFileMetadata": {
+            "calls": 820,
+            "requestBytes": 301346,
+            "responseBytes": 216060,
+            "maxResponseBytes": 264,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"file\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested1/index.ts\"}",
+            "responseExample": "{\"isDefaultLibrary\":false,\"isFromExternalLibrary\":false,\"packageJsonType\":\"module\",\"packageJsonDirectory\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native\",\"impliedNodeFormat\":99}"
+        },
+        "getDeclaredTypeOfSymbol": {
+            "calls": 1183,
+            "requestBytes": 837916,
+            "responseBytes": 202879,
+            "maxResponseBytes": 244,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"symbol\":{\"kind\":0,\"file\":{\"fileName\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested1/index.ts\",\"path\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested1/index.ts\",\"contentHash\":\"5782b87b1f57c3bc9b3c570fe00170b6\",\"parseOptionsKey\":\"2\",\"scriptKind\":3,\"nodeId\":\"14874\"},\"id\":578}}",
+            "responseExample": "{\"id\":141,\"flags\":1048576,\"objectFlags\":2621442,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"symbol\":{\"id\":578,\"file\":\"14874\"}}"
+        },
+        "createSnapshot": {
+            "calls": 1,
+            "requestBytes": 564,
+            "responseBytes": 193416,
+            "maxResponseBytes": 193416,
+            "requestExample": "{\"fileSystem\":{\"kind\":\"layer\",\"files\":{\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\":\"export interface Summary0 {\\n\\ttotal: number;\\n}\\n\\nexport async function example0(prefix: string): Promise<Summary0> {\\n\\tawait Promise.resolve();\\n\\treturn { total: prefix.length + 0 };\\n}\\n\"}},\"openFiles\":[\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"]}",
+            "responseExample": "{\"snapshot\":1,\"projects\":[{\"id\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"configFileName\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"currentDirectory\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native\",\"dirty\":false,\"parsedCommandLine\":{\"fileNames\":[\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example1/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested1/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested10/index.ts"
+        },
+        "getDefaultProjectForFile": {
+            "calls": 1,
+            "requestBytes": 178,
+            "responseBytes": 193197,
+            "maxResponseBytes": 193197,
+            "requestExample": "{\"snapshot\":1,\"file\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"}",
+            "responseExample": "{\"id\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"configFileName\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"currentDirectory\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native\",\"dirty\":false,\"parsedCommandLine\":{\"fileNames\":[\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example1/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested1/index.ts\",\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example10/nested10/index.ts\",\"/Users/andrew/Developer"
+        },
+        "getIndexInfosOfType": {
+            "calls": 409,
+            "requestBytes": 76064,
+            "responseBytes": 169609,
+            "maxResponseBytes": 417,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":187}",
+            "responseExample": "[{\"keyType\":{\"id\":15,\"flags\":64,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"number\"},\"valueType\":{\"id\":14,\"flags\":32,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"string\"},\"isReadonly\":false,\"declaration\":\"6027.183./users/andrew/developer/microsoft/typescript.worktrees/api-client-perf/built/local/lib.es5.d.ts\"}]"
+        },
+        "getBaseTypes": {
+            "calls": 1183,
+            "requestBytes": 219990,
+            "responseBytes": 2366,
+            "maxResponseBytes": 2,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":141}",
+            "responseExample": "[]"
+        },
+        "getBaseTypeOfLiteralType": {
+            "calls": 11,
+            "requestBytes": 2026,
+            "responseBytes": 1243,
+            "maxResponseBytes": 113,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":15}",
+            "responseExample": "{\"id\":15,\"flags\":64,\"objectFlags\":0,\"isTupleType\":false,\"value\":null,\"isThisType\":false,\"intrinsicName\":\"number\"}"
+        },
+        "isArrayLikeType": {
+            "calls": 204,
+            "requestBytes": 37939,
+            "responseBytes": 816,
+            "maxResponseBytes": 4,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":998}",
+            "responseExample": "true"
+        },
+        "getTargetOfType": {
+            "calls": 4,
+            "requestBytes": 752,
+            "responseBytes": 732,
+            "maxResponseBytes": 195,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"objectId\":161}",
+            "responseExample": "{\"id\":65,\"flags\":1048576,\"objectFlags\":6,\"isTupleType\":false,\"value\":null,\"target\":65,\"typeParameters\":[66],\"localTypeParameters\":[66],\"isThisType\":false,\"thisType\":67,\"symbol\":{\"id\":472}}"
+        },
+        "initialize": {
+            "calls": 1,
+            "requestBytes": 4,
+            "responseBytes": 175,
+            "maxResponseBytes": 175,
+            "requestExample": "null",
+            "responseExample": "{\"caseSensitivity\":0,\"currentDirectory\":\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native\"}"
+        },
+        "updateSnapshot": {
+            "calls": 1,
+            "requestBytes": 386,
+            "responseBytes": 43,
+            "maxResponseBytes": 43,
+            "requestExample": "{\"snapshot\":1,\"changes\":{\"closeFiles\":[\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/src/example0/index.ts\"],\"ensurePrograms\":true,\"openProjects\":[\"/Users/andrew/Developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\"]}}",
+            "responseExample": "{\"snapshot\":2,\"projects\":[],\"operation\":{}}"
+        },
+        "typeToString": {
+            "calls": 10,
+            "requestBytes": 1843,
+            "responseBytes": 36,
+            "maxResponseBytes": 8,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":15}",
+            "responseExample": "\"number\""
+        },
+        "isArrayType": {
+            "calls": 6,
+            "requestBytes": 1105,
+            "responseBytes": 28,
+            "maxResponseBytes": 5,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\",\"type\":142}",
+            "responseExample": "true"
+        },
+        "release": {
+            "calls": 1,
+            "requestBytes": 14,
+            "responseBytes": 4,
+            "maxResponseBytes": 4,
+            "requestExample": "{\"snapshot\":1}",
+            "responseExample": "true"
+        },
+        "getSyntacticDiagnostics": {
+            "calls": 1,
+            "requestBytes": 173,
+            "responseBytes": 2,
+            "maxResponseBytes": 2,
+            "requestExample": "{\"snapshot\":2,\"project\":\"/users/andrew/developer/eg/typescript-eslint/performance/cases/files-1024-layout-even-rules-recommended-singlerun-false-types-native/tsconfig.json\"}",
+            "responseExample": "[]"
+        }
+    }
+}
