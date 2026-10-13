@@ -1,6 +1,6 @@
 # API client performance: results of the autonomous follow-up investigation
 
-This report covers the Linux follow-up to the handoff in [README.md](README.md). Every experiment I ran is listed here, including the ones I discarded. It ends with a recommended series of six commits.
+This report covers the Linux follow-up to the handoff in [README.md](README.md), including discarded experiments and a recommended series of six commits. A [macOS follow-up](#macos-follow-up-2026-10-13) below measures the polling tradeoffs on Apple Silicon and considers adaptive polling windows.
 
 ## Summary
 
@@ -238,3 +238,89 @@ All timing summaries, including every per-run sample (`compare/<name>.json`), ar
 | `compare-base-vs-base2` | A/A |
 
 The variants labelled `spin*`, `lsS`, `lsC*` and `lsSC` were measured with earlier, environment-variable-controlled builds of the same polling logic (`TSGO_API_SPIN_US`, `TSGO_API_CLIENT_SPIN_US`). The shipped commit replaces those variables with options.
+
+## macOS follow-up (2026-10-13)
+
+### Environment and experiments
+
+* Machine: Apple M5 Pro, 15 logical CPUs, 48 GiB RAM, macOS kernel release 25.6.0, darwin/arm64. AC power; the recorded power-mode setting was 0.
+* Toolchains: Node **v24.18.0**, V8 **13.6.233.17-node.50**, Go **1.27.1**.
+* Series revision: `194bdb3b5d1d305df1238a2670997e4026450efb`, with a clean worktree. All window experiments reused the same saved build.
+* Workload: the same frozen 1,024-file fixture. Comparisons used the existing interleaved runner with one warmup per configuration.
+* Scope: tight-polling **window lengths**, not sleeps or delays between read attempts. The server repeatedly attempts a nonblocking read until data arrives or its window expires, then blocks waiting for input. Each subsequent read gets a fresh window.
+
+The initial reproduction followed [MACOS.md](MACOS.md), with seven measured runs per configuration, both microbenchmarks and the full client sweep. The raw pipe floor was **6.42 µs** without polling, **3.42 µs** with server polling alone and **3.06 µs** with both sides polling. These are descriptive comparisons with the historical Linux measurements, not paired cross-platform results.
+
+The follow-up experiments comprised **273 measured lint runs**, plus 35 warmups and 48 echo measurements:
+
+| Experiment | Windows | Measured runs per configuration | Evidence |
+| --- | --- | --- | --- |
+| Server sweep | Server 0, 2, 5, 10, 20, 35, 50, 100 µs; client 0 or 100 µs | 7 | [Summary and samples](runs/server-window-darwin-2026-10-13T22-35-28-598Z/analysis.json) |
+| Confirmation | Server 0, 10, 15, 20, 25, 50 µs with client 100 µs; also 0/0 control | 11 | [Summary and samples](runs/server-window-confirmation-darwin-2026-10-13T22-51-51-970Z/analysis.json) |
+| Joint sweep | Client 10, 25, 50, 100, 200 µs with server 25 or 50 µs; also 0/0 and 100/0 controls | 7 | [Summary and samples](runs/server-window-joint-darwin-2026-10-13T23-04-19-501Z/analysis.json) |
+
+Echo measurements used three repetitions of 100,000 iterations for each of three payload sizes at each of the 16 server-sweep configurations.
+
+### Best measured tradeoffs
+
+The following medians all come from the **same final interleaved joint-sweep experiment**. CPU is accumulated processing time, not utilization. Total CPU is the median of each sample's client user + system + server CPU sum; it is not the sum of independently computed medians. On macOS, server CPU is sampled using `ps` and includes user and system time together, at approximately 10 ms resolution.
+
+**The 0/0 reference here is the series build with polling disabled, not the unmodified base revision used in the Linux summary.**
+
+| Client / server window | Wall time | Server CPU | Total CPU |
+| --- | --- | --- | --- |
+| 0 / 0 µs | 6.837 s | 2.630 s | 10.093 s |
+| 100 / 0 µs (current defaults) | 6.965 s | 2.670 s | 11.546 s |
+| 10 / 25 µs | 6.213 s | 3.630 s | 11.186 s |
+| **25 / 25 µs** | **6.167 s** | **3.570 s** | **11.273 s** |
+| **25 / 50 µs** | **6.045 s** | **3.770 s** | **11.373 s** |
+| 100 / 25 µs | 6.128 s | 3.550 s | 11.505 s |
+| **100 / 50 µs** | **5.993 s** | **3.780 s** | **11.670 s** |
+
+Recommendations for this Mac and workload:
+
+* **Lowest CPU:** disable both kinds of polling.
+* **Balanced:** client **25 µs**, server **25 µs**, about **10% less wall time for 12% more total CPU**, using raw medians versus the series build with polling disabled.
+* **More speed without the full CPU cost:** client **25 µs**, server **50 µs**.
+* **Latency-first:** client **100 µs**, server **50 µs**. A 100 µs server window brought no convincing additional gain.
+
+The paired analysis provides a more direct comparison than subtracting independently selected medians:
+
+* With the client held at 100 µs, reducing the server window **50 → 25 µs** saved **170 ms** of server CPU in the confirmation and **220 ms** in the joint sweep, costing **59 ms** and **36 ms** of wall time respectively (paired medians). Server CPU fell in every pair in both experiments. The confirmation's exploratory 95% bootstrap interval for the wall-time difference includes zero.
+* Reducing the server window to **20 µs** saved 210 ms of server CPU but cost 158 ms of wall time in the confirmation (paired medians). Its total-CPU improvement was less clear because client CPU also changes.
+* With the server held at 50 µs, reducing the client window **100 → 25 µs** saved **215 ms** of total CPU in paired median, at a **102 ms** wall-time cost in the joint sweep. Total CPU fell in all seven pairs.
+
+Server polling alone did not help this workload. With client polling off, server windows of **2–20 µs** consistently made it slower; longer windows mostly returned to baseline while burning more CPU. The two sides interact strongly, so independently optimizing their windows is insufficient.
+
+Echo latency alone would have missed this interaction: with client polling at 100 µs, even a 2 µs server window gave excellent echo latency but little end-to-end benefit. The client-only 100 µs default also lost to no polling in this Mac workload, unlike the Linux results.
+
+These measurements identify a useful CPU/latency frontier, not a universal optimum. Some neighboring configurations are within run-to-run noise. They cover one sequential workload on one Mac, not throughput under concurrent CPU pressure. The bootstrap intervals are exploratory, use 10,000 paired resamples, and have no multiple-comparison correction. Do not compare medians across the three experiments as though they were paired.
+
+### Plausibility of dynamic window scaling
+
+Dynamic scaling is plausible, but it should adapt to observed behavior rather than CPU speed or platform names. Two quantities matter:
+
+1. **When the next message becomes available.** The server waits for client-side work and response delivery; the client waits for server-side work and request delivery.
+2. **How expensive blocking and waking are.** Scheduler behavior, OS, virtualization and contention all matter. A faster CPU alone does not determine the appropriate window.
+
+The historical Linux pipe floor was roughly **23 µs**, versus **6.4 µs** here, leaving more wake-up latency to recover on that VM. Faster client work can also shorten inter-request gaps on the Mac. Neither effect justifies a simple rule that scales a fixed window by machine speed, especially given the strong client/server interaction.
+
+A reasonable prototype would be a **bounded, per-session controller**:
+
+* Use a small discrete set of windows, maintaining independent client and server state but evaluating their combined effect.
+* Collect poll hits, timeouts and cumulative spinning time cheaply; update over batches rather than changing the window every request.
+* Occasionally probe neighboring windows, including longer windows. A timeout only establishes that arrival exceeded the current window; learning solely from successful polls biases the estimate downward.
+* Favor the smallest window delivering meaningful benefit, subject to a **spin-CPU budget**. Hit rate alone is a poor objective: long waits can buy extra hits very expensively.
+* Back off during sustained misses or idle phases, retaining occasional exploration so a new burst can recover.
+* Preserve explicit fixed-window overrides and an off switch.
+
+Start with a simple hit/timeout-and-budget controller before attempting an elaborate autotuner. Validate it against the fixed-window frontier on **both Mac and Linux**, including concurrent CPU-bound workloads. A controller can optimize its own polling statistics while worsening whole-workload throughput. No adaptive implementation or product-default changes were made for these experiments.
+
+### Verification and artifacts
+
+All 273 measured samples produced matching diagnostic and fixture-source digests, including across the three experiments. Every measured server CPU sample was nonzero. `npx hereby validate --api` **passed** after the experiments; the product worktree remained clean.
+
+* [Combined analysis, including paired differences and confidence intervals](runs/server-window-joint-darwin-2026-10-13T23-04-19-501Z/combined-analysis.json).
+* [Results archive, including logs, provenance, raw samples and reproduction/analysis scripts](runs/server-window-experiments-2026-10-13.zip).
+
+These artifacts are local, git-ignored outputs under `runs/`; share the archive alongside this report. The archived scripts contain local absolute paths that need adjusting on another machine.
