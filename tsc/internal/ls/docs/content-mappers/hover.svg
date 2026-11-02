@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="716.8000000000001" height="302" viewBox="0 0 716.8000000000001 302">
+<defs><pattern id="gap" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f6f8fa"/><line x1="0" y1="0" x2="0" y2="6" stroke="#d0d7de" stroke-width="2"/></pattern></defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1f2328">Hover over an identifier projected three times</text>
+<text x="16" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2328">Hover runs at every single-segment projection. The comment copy produces nothing; both declarations produce</text>
+<text x="16" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2328">a hover, and both are shown.</text>
+<text x="80" y="124" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8c959f">original</text>
+<text x="80" y="218" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8c959f">virtual</text>
+<rect x="92" y="202" width="33" height="24" fill="url(#gap)"/>
+<rect x="136" y="202" width="77" height="24" fill="url(#gap)"/>
+<rect x="224" y="202" width="154" height="24" fill="url(#gap)"/>
+<rect x="389" y="202" width="77" height="24" fill="url(#gap)"/>
+<polygon points="158,132 169,132 136,202 125,202" fill="rgba(84, 174, 255, 0.22)" stroke="#54aeff" stroke-width="0.75" stroke-opacity="0.6"/>
+<rect x="158" y="108" width="11" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<rect x="125" y="202" width="11" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<polygon points="158,132 169,132 224,202 213,202" fill="rgba(84, 174, 255, 0.22)" stroke="#54aeff" stroke-width="0.75" stroke-opacity="0.6"/>
+<rect x="158" y="108" width="11" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<rect x="213" y="202" width="11" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<polygon points="158,132 169,132 389,202 378,202" fill="rgba(84, 174, 255, 0.22)" stroke="#54aeff" stroke-width="0.75" stroke-opacity="0.6"/>
+<rect x="158" y="108" width="11" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<rect x="378" y="202" width="11" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<text x="97.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&lt;</text>
+<text x="108.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">p</text>
+<text x="119.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&gt;</text>
+<text x="130.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">{</text>
+<text x="141.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">{</text>
+<text x="163.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">x</text>
+<text x="185.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">}</text>
+<text x="196.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">}</text>
+<text x="207.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&lt;</text>
+<text x="218.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">/</text>
+<text x="229.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">p</text>
+<text x="240.5" y="125" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&gt;</text>
+<text x="97.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">/</text>
+<text x="108.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">/</text>
+<text x="130.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">x</text>
+<text x="141.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">↵</text>
+<text x="152.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">c</text>
+<text x="163.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">o</text>
+<text x="174.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">n</text>
+<text x="185.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">s</text>
+<text x="196.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">t</text>
+<text x="218.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">x</text>
+<text x="240.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">=</text>
+<text x="262.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">1</text>
+<text x="273.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">;</text>
+<text x="284.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">↵</text>
+<text x="295.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">{</text>
+<text x="317.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">c</text>
+<text x="328.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">o</text>
+<text x="339.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">n</text>
+<text x="350.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">s</text>
+<text x="361.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">t</text>
+<text x="383.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">x</text>
+<text x="405.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">=</text>
+<text x="427.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">&quot;</text>
+<text x="438.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">&quot;</text>
+<text x="460.5" y="219" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">}</text>
+<rect x="157" y="106" width="13" height="28" rx="4" fill="none" stroke="#1a7f37" stroke-width="2" stroke-dasharray=""/>
+<text x="163.5" y="98" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#1a7f37">hover</text>
+<rect x="124" y="200" width="13" height="28" rx="4" fill="none" stroke="#cf222e" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="130.5" y="244" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#cf222e">no hover</text>
+<rect x="212" y="200" width="13" height="28" rx="4" fill="none" stroke="#0550ae" stroke-width="2" stroke-dasharray=""/>
+<text x="218.5" y="244" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0550ae">const x: 1</text>
+<rect x="377" y="200" width="13" height="28" rx="4" fill="none" stroke="#0550ae" stroke-width="2" stroke-dasharray=""/>
+<text x="383.5" y="244" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0550ae">const x: &quot;&quot;</text>
+<rect x="16" y="276" width="14" height="12" fill="#ddf4ff" stroke="#54aeff"/>
+<text x="36" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">verbatim segment</text>
+<rect x="144" y="276" width="14" height="12" fill="url(#gap)" stroke="#d0d7de"/>
+<text x="164" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">synthesized (gap)</text>
+<rect x="278" y="276" width="14" height="12" rx="3" fill="none" stroke="#1a7f37" stroke-width="2" stroke-dasharray=""/>
+<text x="298" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">request</text>
+<rect x="352" y="276" width="14" height="12" rx="3" fill="none" stroke="#0550ae" stroke-width="2" stroke-dasharray=""/>
+<text x="372" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">response</text>
+<rect x="432" y="276" width="14" height="12" rx="3" fill="none" stroke="#cf222e" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="452" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">dropped</text>
+</svg>

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="761.6" height="318" viewBox="0 0 761.6 318">
+<defs><pattern id="gap" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f6f8fa"/><line x1="0" y1="0" x2="0" y2="6" stroke="#d0d7de" stroke-width="2"/></pattern></defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1f2328">Formatting assigns each original position to one projection</text>
+<text x="16" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2328">The script is copied twice. The first copy covers the whole original range, so the second is not formatted at all,</text>
+<text x="16" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2328">and the user receives one set of edits.</text>
+<text x="80" y="140" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8c959f">original</text>
+<text x="80" y="234" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8c959f">virtual</text>
+<rect x="169" y="218" width="242" height="24" fill="url(#gap)"/>
+<rect x="488" y="218" width="22" height="24" fill="url(#gap)"/>
+<polygon points="180,148 257,148 169,218 92,218" fill="rgba(84, 174, 255, 0.22)" stroke="#54aeff" stroke-width="0.75" stroke-opacity="0.6"/>
+<rect x="180" y="124" width="77" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<rect x="92" y="218" width="77" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<text x="174.5" y="187" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#54aeff" font-weight="600" paint-order="stroke" stroke="#ffffff" stroke-width="3">copy 1</text>
+<polygon points="180,148 257,148 488,218 411,218" fill="rgba(84, 174, 255, 0.22)" stroke="#54aeff" stroke-width="0.75" stroke-opacity="0.6"/>
+<rect x="180" y="124" width="77" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<rect x="411" y="218" width="77" height="24" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<text x="334" y="187" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#54aeff" font-weight="600" paint-order="stroke" stroke="#ffffff" stroke-width="3">copy 2</text>
+<text x="97.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&lt;</text>
+<text x="108.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">s</text>
+<text x="119.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">c</text>
+<text x="130.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">r</text>
+<text x="141.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">i</text>
+<text x="152.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">p</text>
+<text x="163.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">t</text>
+<text x="174.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&gt;</text>
+<text x="185.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">l</text>
+<text x="196.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">e</text>
+<text x="207.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">t</text>
+<text x="229.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">a</text>
+<text x="240.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">=</text>
+<text x="251.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">1</text>
+<text x="262.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&lt;</text>
+<text x="273.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">/</text>
+<text x="284.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">s</text>
+<text x="295.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">c</text>
+<text x="306.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">r</text>
+<text x="317.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">i</text>
+<text x="328.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">p</text>
+<text x="339.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">t</text>
+<text x="350.5" y="141" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">&gt;</text>
+<text x="97.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">l</text>
+<text x="108.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">e</text>
+<text x="119.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">t</text>
+<text x="141.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">a</text>
+<text x="152.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">=</text>
+<text x="163.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">1</text>
+<text x="174.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">;</text>
+<text x="185.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">↵</text>
+<text x="196.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">f</text>
+<text x="207.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">u</text>
+<text x="218.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">n</text>
+<text x="229.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">c</text>
+<text x="240.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">t</text>
+<text x="251.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">i</text>
+<text x="262.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">o</text>
+<text x="273.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">n</text>
+<text x="295.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">r</text>
+<text x="306.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">e</text>
+<text x="317.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">n</text>
+<text x="328.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">d</text>
+<text x="339.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">e</text>
+<text x="350.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">r</text>
+<text x="361.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">(</text>
+<text x="372.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">)</text>
+<text x="394.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">{</text>
+<text x="416.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">l</text>
+<text x="427.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">e</text>
+<text x="438.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">t</text>
+<text x="460.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">a</text>
+<text x="471.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">=</text>
+<text x="482.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#1f2328">1</text>
+<text x="504.5" y="235" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#8c959f">}</text>
+<line x1="235" y1="121" x2="235" y2="151" stroke="#0550ae" stroke-width="2.5" stroke-dasharray=""/>
+<polygon points="231,115 239,115 235,121" fill="#0550ae"/>
+<text x="235" y="108" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0550ae">insert spaces</text>
+<line x1="246" y1="121" x2="246" y2="151" stroke="#0550ae" stroke-width="2.5" stroke-dasharray=""/>
+<polygon points="242,115 250,115 246,121" fill="#0550ae"/>
+<rect x="91" y="216" width="79" height="28" rx="4" fill="none" stroke="#0550ae" stroke-width="2" stroke-dasharray=""/>
+<text x="130.5" y="260" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0550ae">formatted</text>
+<rect x="410" y="216" width="79" height="28" rx="4" fill="none" stroke="#cf222e" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="449.5" y="260" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#cf222e">already covered</text>
+<rect x="16" y="292" width="14" height="12" fill="#ddf4ff" stroke="#54aeff"/>
+<text x="36" y="302" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">verbatim segment</text>
+<rect x="144" y="292" width="14" height="12" fill="url(#gap)" stroke="#d0d7de"/>
+<text x="164" y="302" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">synthesized (gap)</text>
+<rect x="278" y="292" width="14" height="12" rx="3" fill="none" stroke="#0550ae" stroke-width="2" stroke-dasharray=""/>
+<text x="298" y="302" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">response</text>
+<rect x="358" y="292" width="14" height="12" rx="3" fill="none" stroke="#cf222e" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="378" y="302" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2328">dropped</text>
+</svg>
